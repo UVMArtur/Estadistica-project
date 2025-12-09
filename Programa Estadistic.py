@@ -27,8 +27,3 @@ if st.button("Calcular"):
  
     except:
         st.error("Revisa que los datos estén escritos correctamente.")
-    - Organización en pestañas (entrada de datos, resultados e información)
-
-    """)
-
- 
