@@ -4,405 +4,439 @@ import streamlit as st
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
 
-# -------------------------
-# Configuración de página
-# -------------------------
-st.set_page_config(page_title="Calculadora Estadística", layout="wide", page_icon="🧮")
+# -----------------------------------------------------------------------------
+# 1. CONFIGURACIÓN DE PÁGINA
+# -----------------------------------------------------------------------------
+st.set_page_config(
+    page_title="Calculadora de Estadística",
+    layout="wide",
+    page_icon="🧬"
+)
 
-# -------------------------
-# Lógica de Cálculo (Python)
-# -------------------------
-def parse_strict_point(text: str):
-    if re.search(r'\d+,\d+', text):
-        return None, "Error: Usa PUNTO (.) para decimales. Ejemplo: 10.5 (no 10,5)."
-    parts = re.split(r'[,\;\n\r]+|\s+', text.strip())
-    tokens = [p for p in parts if p != ""]
-    nums = []
-    for t in tokens:
-        if re.fullmatch(r'[-+]?(?:\d+|\d+\.\d+|\.\d+)', t):
-            nums.append(float(t))
-        else:
-            return None, f"Error: Token inválido '{t}'."
-    if not nums:
-        return None, "No hay datos."
-    return np.array(nums, dtype=float), None
-
-def compute_modes(arr):
-    vals, counts = np.unique(arr, return_counts=True)
-    maxc = counts.max()
-    if maxc == 1:
-        return []
-    return vals[counts == maxc].tolist()
-
-# -------------------------
-# Generación de Gráfico (Matplotlib -> Base64)
-# -------------------------
-def get_hist_image(data, mean_val):
-    fig, ax = plt.subplots(figsize=(10, 4), dpi=100)
-    fig.patch.set_facecolor('#000000') # Fondo negro total
-    ax.set_facecolor('#000000')
-    
-    # Histograma morado exacto
-    counts, bins, patches = ax.hist(data, bins='auto', color='#8b5cf6', edgecolor='black', alpha=1.0)
-    
-    # Números encima de las barras (blancos y negrita)
-    for p, c in zip(patches, counts):
-        if c > 0:
-            x = p.get_x() + p.get_width() / 2
-            y = p.get_height()
-            ax.text(x, y + 0.05 * max(counts), f"{int(c)}", ha='center', va='bottom', 
-                    color='white', fontweight='bold', fontsize=12)
-    
-    # Línea promedio punteada blanca
-    ax.axvline(mean_val, color='white', linestyle='--', linewidth=2)
-    ax.text(mean_val + (max(data)-min(data))*0.02, max(counts)*0.95, "Promedio", color='white', fontsize=10)
-
-    # Quitar ejes para que se vea limpio como la imagen
-    ax.axis('off')
-    
-    # Guardar en memoria
-    buf = BytesIO()
-    plt.tight_layout()
-    plt.savefig(buf, format="png", facecolor='#000000')
-    buf.seek(0)
-    img_str = base64.b64encode(buf.read()).decode()
-    plt.close(fig)
-    return img_str
-
-# -------------------------
-# ESTILOS CSS (REPLICA EXACTA)
-# -------------------------
+# -----------------------------------------------------------------------------
+# 2. ESTILOS CSS AVANZADOS (REPLICA EXACTA)
+# -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
-    
-    /* Reset total */
-    html, body, [class*="css"] {
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap');
+
+    /* FONDO GENERAL */
+    .stApp {
+        background-color: #000000 !important;
         font-family: 'Outfit', sans-serif;
-        background-color: #000000;
-        color: white;
     }
-    
-    /* Ocultar elementos nativos de Streamlit */
+
+    /* OCULTAR ELEMENTOS NATIVOS MOLESTOS */
     header, footer {visibility: hidden;}
-    .stApp { margin-top: -50px; }
-    
-    /* TITULO */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }
+
+    /* --- TITULO PRINCIPAL --- */
     .main-title {
-        font-size: 48px;
-        font-weight: 900;
         text-align: center;
-        margin-bottom: 10px;
+        color: white;
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
     }
     
-    /* BARRA GRADIENTE */
     .gradient-bar {
         height: 12px;
         width: 100%;
-        max-width: 1200px;
-        margin: 0 auto 40px auto;
-        background: linear-gradient(90deg, #8b5cf6 0%, #3b82f6 50%, #2dd4bf 100%);
+        background: linear-gradient(90deg, #7c3aed 0%, #3b82f6 50%, #2dd4bf 100%);
         border-radius: 10px;
+        margin-bottom: 3rem;
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
     }
-    
-    /* MENU DE PESTAÑAS PERSONALIZADO (CSS GRID) */
-    .nav-container {
-        display: flex;
+
+    /* --- PESTAÑAS (TABS) PERSONALIZADAS --- */
+    .stTabs [data-baseweb="tab-list"] {
         justify-content: center;
-        gap: 40px;
-        margin-bottom: 40px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 0px;
+        gap: 2rem;
+        background-color: transparent;
+        border: none;
     }
-    .nav-item {
-        font-size: 16px;
-        color: #cccccc;
-        text-align: center;
+    .stTabs [data-baseweb="tab"] {
+        background-color: transparent;
+        border: none;
+        color: #888;
+        font-size: 1.1rem;
+        font-weight: 400;
         padding-bottom: 10px;
-        cursor: pointer;
-        max-width: 150px;
     }
-    .nav-item.active {
-        color: white;
-        border-bottom: 4px solid #8b5cf6; /* Morado activo */
-        font-weight: bold;
+    /* Colores específicos para la línea activa de cada tab */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
+        color: white; border-bottom: 4px solid #7c3aed !important; font-weight: 700;
+    }
+    .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
+        color: white; border-bottom: 4px solid #3b82f6 !important; font-weight: 700;
+    }
+    .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] {
+        color: white; border-bottom: 4px solid #ef4444 !important; font-weight: 700;
+    }
+    .stTabs [data-baseweb="tab-list"] button:nth-child(4)[aria-selected="true"] {
+        color: white; border-bottom: 4px solid #22c55e !important; font-weight: 700;
+    }
+    .stTabs [data-baseweb="tab-list"] button:nth-child(5)[aria-selected="true"] {
+        color: white; border-bottom: 4px solid #ffffff !important; font-weight: 700;
     }
 
-    /* CONTENEDOR PRINCIPAL (GRID) */
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: 350px 20px 1fr; /* Panel izq | Separador | Panel der */
-        gap: 0px;
-        max-width: 1100px;
-        margin: 0 auto;
-        align-items: start;
-    }
-
-    /* --- PANEL IZQUIERDO (BLANCO) --- */
-    .input-panel {
-        background-color: white;
+    /* --- PANEL IZQUIERDO (CONTENEDOR BLANCO) --- */
+    /* Hack para estilizar la columna específica de Streamlit */
+    div[data-testid="column"]:nth-of-type(1) > div {
+        background-color: #ffffff;
         border-radius: 30px;
         padding: 25px;
-        color: black;
-        box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .input-title {
-        color: #7c3aed; /* Morado fuerte */
-        font-size: 28px;
+
+    /* Titulo Datos */
+    .datos-title {
+        color: #6d28d9;
+        font-size: 2.2rem;
         font-weight: 900;
         margin-bottom: 5px;
-        border-bottom: 4px solid #7c3aed;
+        border-bottom: 4px solid #8b5cf6;
         display: inline-block;
-        width: 100px;
+        width: 60%;
     }
-    .input-instruction {
-        background-color: #5b6af0; /* Azul similar imagen */
+
+    /* Caja azul de instrucción */
+    .info-box {
+        background-color: #5b68e6;
         color: white;
-        font-size: 12px;
-        padding: 8px;
+        padding: 12px;
+        font-size: 0.9rem;
+        border-radius: 8px;
         margin-top: 15px;
         margin-bottom: 15px;
-        text-align: center;
+        line-height: 1.4;
     }
-    /* Estilizar el textarea nativo inyectado */
+
+    /* TEXTAREA (Input negro) */
     .stTextArea textarea {
         background-color: #000000 !important;
         color: white !important;
-        border: none !important;
-        height: 100px;
+        border: 1px solid #333 !important;
+        border-radius: 0px !important; /* Cuadrado como en la imagen */
+        font-family: monospace;
+        height: 150px;
     }
-    
-    /* --- SEPARADOR VERTICAL --- */
-    .vertical-line {
-        width: 4px;
-        height: 350px;
-        background: linear-gradient(to bottom, #7c3aed, #000);
-        margin: 0 auto;
+    .stTextArea label { display: none; } /* Ocultar label nativo */
+
+    /* BOTÓN ANALIZAR DATOS */
+    div.stButton > button {
+        background-color: #7c3aed !important;
+        color: white !important;
+        border-radius: 50px !important;
+        border: none !important;
+        padding: 12px 30px !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        width: 100%;
+        margin-top: 10px;
+        transition: transform 0.2s;
+    }
+    div.stButton > button:hover {
+        background-color: #6d28d9 !important;
+        transform: scale(1.02);
     }
 
-    /* --- PANEL DERECHO (TARJETAS) --- */
-    .cards-grid {
+    /* --- SEPARADOR VERTICAL --- */
+    .vertical-line {
+        border-left: 3px solid #6d28d9;
+        height: 100%;
+        margin: 0 auto;
+        opacity: 0.8;
+    }
+
+    /* --- TARJETAS DE RESULTADOS (DERECHA) --- */
+    .result-grid {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 15px;
-        margin-left: 20px;
     }
+    
     .stat-card {
         background-color: white;
         border-radius: 15px;
-        padding: 15px;
+        padding: 15px 5px;
         text-align: center;
         color: black;
-        min-height: 90px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
-    .card-label {
-        font-size: 11px;
+    
+    .stat-label {
+        font-size: 0.8rem;
         color: #888;
         font-weight: 700;
-        margin-bottom: 2px;
+        margin-bottom: 5px;
     }
-    .card-value {
-        font-size: 24px;
+    
+    .stat-value {
+        font-size: 1.5rem;
         font-weight: 900;
         color: #000;
     }
-    .card-sub {
-        font-size: 10px;
+    
+    .stat-sub {
+        font-size: 0.7rem;
         color: #666;
         font-style: italic;
-    }
-    
-    /* CAJA INTERPRETACION */
-    .interp-box {
-        background-color: white;
-        margin-top: 20px;
-        margin-left: 20px;
-        padding: 15px;
-        color: black;
-        font-size: 13px;
-        border-left: 6px solid #7c3aed; /* Borde morado izq */
+        margin-top: 2px;
     }
 
-    /* TITULO HISTOGRAMA */
+    /* Caja de Interpretación */
+    .interpret-box {
+        background-color: #f0f0f0; /* Un blanco grisaceo ligero */
+        background: linear-gradient(90deg, #ffffff 0%, #f9fafb 100%);
+        border-left: 6px solid #7c3aed;
+        color: #000;
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 0.9rem;
+    }
+    .interpret-title {
+        font-weight: 900;
+        margin-bottom: 5px;
+        color: #000;
+    }
+
+    /* --- HISTOGRAMA --- */
     .hist-header {
         color: #7c3aed;
-        font-size: 24px;
+        font-size: 2rem;
         font-weight: 900;
-        margin-top: 40px;
-        margin-bottom: 10px;
         text-decoration: underline;
-        max-width: 1100px;
-        margin-left: auto;
-        margin-right: auto;
+        text-decoration-thickness: 3px;
+        margin-top: 40px;
+        margin-bottom: 20px;
     }
-
-    /* BOTON PERSONALIZADO */
-    div.stButton > button {
-        background-color: #7c3aed;
-        color: white;
-        border-radius: 20px;
-        border: none;
-        width: 100%;
-        font-weight: bold;
-        padding: 10px 0;
-    }
-    div.stButton > button:hover {
-        background-color: #6d28d9;
-        color: white;
+    
+    /* Ajustes para errores */
+    .stAlert {
+        background-color: #222 !important;
+        color: #ffcccc !important;
+        border: 1px solid #ff4444 !important;
     }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------
-# INTERFAZ
-# -------------------------
+# -----------------------------------------------------------------------------
+# 3. LÓGICA DE NEGOCIO (FUNCIONES PYTHON)
+# -----------------------------------------------------------------------------
+def parse_data(text):
+    # Validar que NO haya comas decimales (ej: 10,5)
+    if re.search(r'\d+,\d+', text):
+        return None, "Error: Se detectaron comas decimales. Usa PUNTO (.) ej: 10.5"
+    
+    # Reemplazar caracteres raros y separar
+    clean_text = text.replace(';', ' ').replace(',', ' ').replace('\n', ' ')
+    tokens = clean_text.split()
+    
+    nums = []
+    for t in tokens:
+        try:
+            nums.append(float(t))
+        except ValueError:
+            return None, f"Error: '{t}' no es un número válido."
+            
+    if not nums:
+        return None, "El campo está vacío."
+        
+    return np.array(nums), None
 
-# 1. Título y Barra
+def get_modes(data):
+    vals, counts = np.unique(data, return_counts=True)
+    max_count = counts.max()
+    if max_count == 1:
+        return []
+    return vals[counts == max_count].tolist()
+
+# -----------------------------------------------------------------------------
+# 4. ESTRUCTURA DE LA INTERFAZ
+# -----------------------------------------------------------------------------
+
+# Encabezado
 st.markdown('<div class="main-title">Calculadora de estaditica</div>', unsafe_allow_html=True)
 st.markdown('<div class="gradient-bar"></div>', unsafe_allow_html=True)
 
-# 2. Navegación (Visual, simula pestañas)
-st.markdown("""
-<div class="nav-container">
-    <div class="nav-item active">Medidas de<br>tendencia central</div>
-    <div class="nav-item">Inferencia<br>estadística</div>
-    <div class="nav-item">Comparación de<br>dos poblaciones</div>
-    <div class="nav-item">Tamaño de<br>muestra</div>
-    <div class="nav-item">Visual<br>LAB</div>
-</div>
-""", unsafe_allow_html=True)
+# Pestañas
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "Medidas de tendencia central", 
+    "Inferencia estadística", 
+    "Comparación de dos poblaciones", 
+    "Tamaño de muestra", 
+    "Visual LAB"
+])
 
+# --- PESTAÑA 1: DESCRIPTIVA (DISEÑO IDÉNTICO IMAGEN) ---
+with tab1:
+    # Creamos columnas: Panel Izquierdo | Separador | Panel Derecho
+    # Usamos ratios para ajustar el ancho
+    col_left, col_sep, col_right = st.columns([1, 0.05, 1.5])
 
-# -------------------------
-# CUERPO PRINCIPAL (Simulación Grid)
-# -------------------------
-
-# Contenedor Grid usando columnas de Streamlit para inyectar HTML en bloques
-col_izq, col_sep, col_der = st.columns([0.8, 0.1, 1.4])
-
-# --- Variables de Estado para mantener datos ---
-if 'res_stats' not in st.session_state:
-    st.session_state.res_stats = None
-if 'res_hist' not in st.session_state:
-    st.session_state.res_hist = None
-
-with col_izq:
-    st.markdown('<div class="input-panel">', unsafe_allow_html=True)
-    st.markdown('<div class="input-title">Datos:</div>', unsafe_allow_html=True)
-    st.markdown('<div class="input-instruction">Usa PUNTO (.) para decimales. Separa números con<br>comas, punto y coma, espacios o saltos de línea.</div>', unsafe_allow_html=True)
-    
-    # Input nativo (se estiliza con CSS para ser negro)
-    input_text = st.text_area("input_hidden", value="3.2, 4.5, 7.8, 9.1, 0.6, 12.3, 14.7", label_visibility="collapsed")
-    
-    st.markdown('<br>', unsafe_allow_html=True)
-    if st.button("Analizar datos"):
-        data, err = parse_strict_point(input_text)
-        if err:
-            st.error(err)
-            st.session_state.res_stats = None
-        else:
-            # Calcular Estadísticas
-            stats_dict = {
-                'n': len(data),
-                'media': np.mean(data),
-                'mediana': np.median(data),
-                'modas': compute_modes(data),
-                'desv': np.std(data, ddof=1) if len(data)>1 else 0,
-                'var': np.var(data, ddof=1) if len(data)>1 else 0,
-                'ee': (np.std(data, ddof=1)/np.sqrt(len(data))) if len(data)>1 else 0
-            }
-            st.session_state.res_stats = stats_dict
-            st.session_state.res_hist = get_hist_image(data, stats_dict['media'])
-
-    st.markdown('</div>', unsafe_allow_html=True) # Cierre input-panel
-
-with col_sep:
-    st.markdown('<div class="vertical-line"></div>', unsafe_allow_html=True)
-
-with col_der:
-    res = st.session_state.res_stats
-    
-    # Valores por defecto (vacíos) o calculados
-    v_media = f"{res['media']:.2f}" if res else ""
-    v_mediana = f"{res['mediana']:.2f}" if res else ""
-    v_desv = f"{res['desv']:.2f}" if res else ""
-    v_var = f"{res['var']:.2f}" if res else ""
-    v_ee = f"{res['ee']:.4f}" if res else ""
-    
-    # Moda lógica
-    if res:
-        if not res['modas']:
-            v_moda = "—"
-            sub_moda = "No hay moda<br>(todos los valores son únicos)"
-        else:
-            v_moda = ", ".join([str(m) for m in res['modas'][:2]]) # Mostrar máx 2
-            sub_moda = "Multimodal" if len(res['modas']) > 1 else ""
-    else:
-        v_moda = ""
-        sub_moda = ""
-
-    # Interpretación
-    if res:
-        interp_txt = f"Con una muestra de <b>{res['n']}</b> datos, el centro se ubica en <b>{res['media']:.2f}</b>. La dispersión (s) es de <b>{res['desv']:.2f}</b>.<br>Los datos son bastante simétricos (Media ≈ Mediana)."
-    else:
-        interp_txt = "Esperando datos..."
-
-    # HTML Grid de tarjetas
-    html_cards = f"""
-    <div class="cards-grid">
-        <!-- Fila 1 -->
-        <div class="stat-card">
-            <div class="card-label">Promedio (media)</div>
-            <div class="card-value">{v_media}</div>
-        </div>
-        <div class="stat-card">
-            <div class="card-label">Mediana</div>
-            <div class="card-value">{v_mediana}</div>
-        </div>
-        <div class="stat-card">
-            <div class="card-label">Moda</div>
-            <div class="card-value">{v_moda}</div>
-            <div class="card-sub">{sub_moda}</div>
-        </div>
+    # --- PANEL IZQUIERDO (Inputs) ---
+    with col_left:
+        # Título y caja azul (HTML puro)
+        st.markdown("""
+            <div class="datos-title">Datos:</div>
+            <div class="info-box">
+                Usa PUNTO (.) para decimales. Separa números con
+                comas, punto y coma, espacios o saltos de línea.
+            </div>
+        """, unsafe_allow_html=True)
         
-        <!-- Fila 2 -->
-        <div class="stat-card">
-            <div class="card-label">Desviación estándar (s)</div>
-            <div class="card-value">{v_desv}</div>
-            <div class="card-sub">Muestral</div>
-        </div>
-        <div class="stat-card">
-            <div class="card-label">Varianza (s^2)</div>
-            <div class="card-value">{v_var}</div>
-        </div>
-        <div class="stat-card">
-            <div class="card-label">Error estándar (EE)</div>
-            <div class="card-value">{v_ee}</div>
-        </div>
-    </div>
+        # Widget de Streamlit (Text Area)
+        # Nota: El CSS lo vuelve negro y cuadrado
+        input_data = st.text_area("input_label", value="3.2, 4.5, 7.8, 9.1, 0.6, 12.3, 14.7", label_visibility="collapsed")
+        
+        # Botón (Streamlit button)
+        # El CSS lo vuelve morado y redondo
+        calc_btn = st.button("Analizar datos")
+
+    # --- SEPARADOR VERTICAL ---
+    with col_sep:
+        st.markdown('<div class="vertical-line"></div>', unsafe_allow_html=True)
+
+    # --- PANEL DERECHO (Resultados) ---
+    with col_right:
+        if calc_btn:
+            data, error = parse_data(input_data)
+            
+            if error:
+                st.error(error)
+            else:
+                # Cálculos
+                n = len(data)
+                media = np.mean(data)
+                mediana = np.median(data)
+                modas = get_modes(data)
+                
+                # Desviación y Varianza (Muestral si n > 1)
+                ddof = 1 if n > 1 else 0
+                desv = np.std(data, ddof=ddof)
+                var = np.var(data, ddof=ddof)
+                ee = desv / np.sqrt(n)
+                
+                # Formateo de moda
+                if not modas:
+                    moda_val = "—"
+                    moda_sub = "No hay moda<br>(todos los valores son únicos)"
+                else:
+                    moda_val = ", ".join([f"{m:.2f}" for m in modas])
+                    moda_sub = "Moda(s)"
+
+                # --- GRID DE TARJETAS (HTML PURO) ---
+                # Usamos f-strings de Python para inyectar los valores
+                st.markdown(f"""
+                <div class="result-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Promedio (media)</div>
+                        <div class="stat-value">{media:.2f}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Mediana</div>
+                        <div class="stat-value">{mediana:.2f}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Moda</div>
+                        <div class="stat-value">{moda_val}</div>
+                        <div class="stat-sub">{moda_sub}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Desviación estándar (s)</div>
+                        <div class="stat-value">{desv:.2f}</div>
+                        <div class="stat-sub">Muestral</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Varianza (s^2)</div>
+                        <div class="stat-value">{var:.2f}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Error estándar (EE)</div>
+                        <div class="stat-value">{ee:.4f}</div>
+                    </div>
+                </div>
+                
+                <div class="interpret-box">
+                    <div class="interpret-title">Interpretación:</div>
+                    Con una muestra de <b>{n}</b> datos, el centro se ubica en <b>{media:.2f}</b>. 
+                    La dispersión (s) es de <b>{desv:.2f}</b>. 
+                    Los datos son {"bastante simétricos" if abs(media-mediana) < desv/10 else "sesgados"}.
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Guardar en session state para el histograma
+                st.session_state['last_data'] = data
+                st.session_state['last_mean'] = media
+
+        else:
+            # Estado vacio (Placeholder visual para que no se vea feo al inicio)
+             st.markdown("""
+                <div class="result-grid" style="opacity: 0.5;">
+                    <div class="stat-card"><div class="stat-label">Promedio</div><div class="stat-value">-</div></div>
+                    <div class="stat-card"><div class="stat-label">Mediana</div><div class="stat-value">-</div></div>
+                    <div class="stat-card"><div class="stat-label">Moda</div><div class="stat-value">-</div></div>
+                </div>
+                <div style="text-align:center; margin-top:20px; color:#666;">
+                    Presiona "Analizar datos" para ver resultados
+                </div>
+            """, unsafe_allow_html=True)
+
+# --- HISTOGRAMA (FUERA DE LAS COLUMNAS, ANCHO COMPLETO) ---
+# Solo se muestra en la Tab 1 si hay datos calculados
+if calc_btn and 'last_data' in st.session_state:
+    st.markdown('<div class="hist-header">Histograma de Frecuencias:</div>', unsafe_allow_html=True)
     
-    <div class="interp-box">
-        <strong>Interpretación:</strong><br>
-        {interp_txt}
-    </div>
-    """
-    st.markdown(html_cards, unsafe_allow_html=True)
+    data = st.session_state['last_data']
+    media = st.session_state['last_mean']
+    
+    # Crear figura con fondo negro para igualar la imagen
+    fig, ax = plt.subplots(figsize=(12, 4))
+    fig.patch.set_facecolor('black')
+    ax.set_facecolor('black')
+    
+    # Histograma morado
+    counts, bins, patches = ax.hist(data, bins='auto', color='#8b5cf6', edgecolor='black', alpha=0.9)
+    
+    # Etiquetas de valor encima de las barras (blanco)
+    for count, patch in zip(counts, patches):
+        if count > 0:
+            height = patch.get_height()
+            ax.text(patch.get_x() + patch.get_width() / 2, height + 0.1, 
+                    str(int(count)), ha='center', color='white', fontweight='bold', fontsize=12)
+    
+    # Línea promedio
+    ax.axvline(media, color='white', linestyle='--', linewidth=2)
+    ax.text(media + (max(data)*0.02), max(counts), 'Promedio', color='white', fontsize=12)
+    
+    # Eliminar ejes para que parezca "flotante" como en la imagen
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color('#444')
+    ax.tick_params(axis='x', colors='white')
+    ax.set_yticks([]) # Quitar eje Y
+    
+    st.pyplot(fig)
 
-# -------------------------
-# HISTOGRAMA
-# -------------------------
-st.markdown('<div class="hist-header">Histograma de Frecuencias:</div>', unsafe_allow_html=True)
-
-if st.session_state.res_hist:
-    # Centrar la imagen
-    col_izq_h, col_centro_h, col_der_h = st.columns([1, 8, 1])
-    with col_centro_h:
-        st.markdown(f'<img src="data:image/png;base64,{st.session_state.res_hist}" style="width:100%; border-radius:10px;">', unsafe_allow_html=True)
+# --- OTRAS PESTAÑAS (PLACEHOLDERS CON ESTILO) ---
+# Se mantiene la lógica simple pero respetando el tema oscuro
+with tab2:
+    st.header("Inferencia Estadística")
+    st.info("Funcionalidad disponible en versiones completas.")
+with tab3:
+    st.header("Comparación de Poblaciones")
+    st.info("Funcionalidad disponible en versiones completas.")
+with tab4:
+    st.header("Tamaño de Muestra")
+    st.info("Funcionalidad disponible en versiones completas.")
+with tab5:
+    st.header("Laboratorio Visual")
+    st.info("Funcionalidad disponible en versiones completas.")
