@@ -1,4 +1,3 @@
-```python name=stat_suite_final_enhanced.py
 import re
 import streamlit as st
 import numpy as np
@@ -668,4 +667,3 @@ with tab5:
             ax.spines['bottom'].set_color('white')
             ax.spines['left'].set_color('white')
             st.pyplot(fig)
-```
