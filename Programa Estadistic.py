@@ -6,7 +6,6 @@ import numpy as np
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="StatCalc Dark",
-    page_icon="💜",
     layout="centered"
 )
 
