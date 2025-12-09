@@ -150,15 +150,15 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 # =============================================================================
-# 1. DESCRIPTIVA (Morado)
+# 1. DESCRIPTIVA (Morado) - AHORA: obliga punto decimal
 # =============================================================================
 with tab1:
     st.markdown("<h3 style='color:#a855f7'>Análisis de Datos</h3>", unsafe_allow_html=True)
     
     col_in, col_out = st.columns([1, 2], gap="large")
     with col_in:
-        st.info("Introduce tus números separados por comas, punto y coma, espacios o saltos de línea. Se aceptan decimales con punto o coma.")
-        input_desc = st.text_area("Datos Numéricos:", height=150, placeholder="Ej: 10, 15, 12, 18, 20  ó  10.5; 12,3; 9")
+        st.info("Introduce tus números. Usa PUNTO (.) para decimales (ej: 10.5). Puedes separar números con comas, punto y coma, espacios o saltos de línea.")
+        input_desc = st.text_area("Datos Numéricos:", height=150, placeholder="Ej: 10.5, 15, 12.0; 18 20")
         btn_calc_desc = st.button("Analizar Datos", key="btn1")
 
     with col_out:
@@ -166,75 +166,95 @@ with tab1:
             if not input_desc.strip():
                 st.warning("⚠️ El campo está vacío.")
             else:
-                try:
-                    # Extraer todos los números (acepta decimales con '.' o ',')
-                    tokens = re.findall(r'[-+]?\d+(?:[.,]\d+)?', input_desc)
-                    if not tokens:
-                        st.error("No se detectaron números. Introduce valores como 10, 12.5 o 10,5.")
-                    else:
-                        data = np.array([float(t.replace(',', '.')) for t in tokens], dtype=float)
-                        n = data.size
-                        media = float(np.mean(data))
-                        mediana = float(np.median(data))
-                        # Evitar ddof=1 si n < 2
-                        if n >= 2:
-                            desv = float(np.std(data, ddof=1))
-                            var = float(np.var(data, ddof=1))
-                        else:
-                            desv = float(np.std(data, ddof=0))
-                            var = float(np.var(data, ddof=0))
-                        ee = desv / math.sqrt(n) if n > 0 else 0.0
-                        rango = float(np.max(data) - np.min(data)) if n > 0 else 0.0
-                        
-                        # Resultados en tarjetas
-                        c1, c2, c3 = st.columns(3)
-                        c1.markdown(card("Promedio (Media)", f"{media:.2f}", "", "border-purple"), unsafe_allow_html=True)
-                        c2.markdown(card("Valor Central (Mediana)", f"{mediana:.2f}", "", "border-purple"), unsafe_allow_html=True)
-                        c3.markdown(card("Error Estándar (EE)", f"{ee:.4f}", "", "border-purple"), unsafe_allow_html=True)
-                        
-                        c4, c5, c6 = st.columns(3)
-                        c4.markdown(card("Desviación Estándar (s)", f"{desv:.2f}", "Muestral" if n>=2 else "Poblacional (n<2)", "border-purple"), unsafe_allow_html=True)
-                        c5.markdown(card("Varianza (s^2)", f"{var:.2f}", "", "border-purple"), unsafe_allow_html=True)
-                        c6.markdown(card("Rango", f"{rango:.2f}", "", "border-purple"), unsafe_allow_html=True)
-
-                        # Análisis de Sesgo
-                        sesgo = ""
-                        if desv == 0:
-                            sesgo = "No hay variación (todos los valores son iguales)."
-                        else:
-                            if abs(media - mediana) < (desv/10):
-                                sesgo = "Los datos son bastante simétricos (Media ≈ Mediana)."
-                            elif media > mediana:
-                                sesgo = "Hay sesgo positivo (Cola a la derecha). El promedio es jalado por valores altos."
+                # Verificación: si se detecta un número con coma decimal, forzar uso de punto
+                # (rechazamos entradas tipo 10,5 que usan coma como decimal)
+                if re.search(r'\d+,\d+', input_desc):
+                    st.error("Por favor usa PUNTO (.) para decimales. Reemplaza '10,5' por '10.5' y vuelve a intentar.")
+                else:
+                    try:
+                        # Dividir usando separadores comunes: coma, punto y coma, espacios y saltos de línea.
+                        parts = re.split(r'[,\;\s]+', input_desc.strip())
+                        tokens = [p for p in parts if p != '']
+                        # Buscamos sólo valores válidos con punto decimal opcional
+                        nums = []
+                        for t in tokens:
+                            # Validar que el token es un número con punto decimal (si tiene parte decimal)
+                            if re.fullmatch(r'[-+]?(?:\d+|\d+\.\d+|\.\d+)', t):
+                                nums.append(float(t))
                             else:
-                                sesgo = "Hay sesgo negativo (Cola a la izquierda). El promedio es jalado por valores bajos."
+                                # token inválido -> mostrar mensaje y abortar
+                                st.error(f"Token inválido detectado: '{t}'. Usa sólo números con '.' como decimal. Ej: 10.5")
+                                nums = None
+                                break
 
-                        st.markdown(f"""
-                        <div class="simple-text" style="border-left-color: #a855f7;">
-                            <strong>Interpretación:</strong><br>
-                            Con una muestra de <b>{n}</b> datos, el centro se ubica en <b>{media:.2f}</b>. 
-                            La dispersión promedio es de <b>{desv:.2f}</b>.<br>
-                            <em>Análisis de Forma:</em> {sesgo}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        if nums is None or len(nums) == 0:
+                            if nums is None:
+                                # ya mostramos el error específico
+                                pass
+                            else:
+                                st.error("No se detectaron números válidos. Asegúrate de usar puntos para decimales.")
+                        else:
+                            data = np.array(nums, dtype=float)
+                            n = data.size
+                            media = float(np.mean(data))
+                            mediana = float(np.median(data))
+                            if n >= 2:
+                                desv = float(np.std(data, ddof=1))
+                                var = float(np.var(data, ddof=1))
+                            else:
+                                desv = float(np.std(data, ddof=0))
+                                var = float(np.var(data, ddof=0))
+                            ee = desv / math.sqrt(n) if n > 0 else 0.0
+                            rango = float(np.max(data) - np.min(data)) if n > 0 else 0.0
 
-                        # Histograma
-                        st.write("#### Histograma de Frecuencias")
-                        fig, ax = plt.subplots(figsize=(10, 3))
-                        fig.patch.set_facecolor('#050505')
-                        ax.set_facecolor('#111')
-                        counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
-                        try:
-                            ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
-                        except Exception:
-                            # bar_label puede no estar disponible en algunas versiones; no es crítico
-                            pass
-                        ax.axvline(media, color='white', linestyle='--', label='Promedio')
-                        ax.legend(facecolor='#222', labelcolor='white', frameon=False)
-                        ax.axis('off')
-                        st.pyplot(fig)
-                except Exception as e:
-                    st.error(f"Error al procesar los datos: {e}")
+                            # Resultados en tarjetas
+                            c1, c2, c3 = st.columns(3)
+                            c1.markdown(card("Promedio (Media)", f"{media:.2f}", "", "border-purple"), unsafe_allow_html=True)
+                            c2.markdown(card("Valor Central (Mediana)", f"{mediana:.2f}", "", "border-purple"), unsafe_allow_html=True)
+                            c3.markdown(card("Error Estándar (EE)", f"{ee:.4f}", "", "border-purple"), unsafe_allow_html=True)
+                            
+                            c4, c5, c6 = st.columns(3)
+                            c4.markdown(card("Desviación Estándar (s)", f"{desv:.2f}", "Muestral" if n>=2 else "Poblacional (n<2)", "border-purple"), unsafe_allow_html=True)
+                            c5.markdown(card("Varianza (s^2)", f"{var:.2f}", "", "border-purple"), unsafe_allow_html=True)
+                            c6.markdown(card("Rango", f"{rango:.2f}", "", "border-purple"), unsafe_allow_html=True)
+
+                            # Análisis de Sesgo
+                            sesgo = ""
+                            if desv == 0:
+                                sesgo = "No hay variación (todos los valores son iguales)."
+                            else:
+                                if abs(media - mediana) < (desv/10):
+                                    sesgo = "Los datos son bastante simétricos (Media ≈ Mediana)."
+                                elif media > mediana:
+                                    sesgo = "Hay sesgo positivo (Cola a la derecha). El promedio es jalado por valores altos."
+                                else:
+                                    sesgo = "Hay sesgo negativo (Cola a la izquierda). El promedio es jalado por valores bajos."
+
+                            st.markdown(f"""
+                            <div class="simple-text" style="border-left-color: #a855f7;">
+                                <strong>Interpretación:</strong><br>
+                                Con una muestra de <b>{n}</b> datos, el centro se ubica en <b>{media:.2f}</b>. 
+                                La dispersión promedio es de <b>{desv:.2f}</b>.<br>
+                                <em>Análisis de Forma:</em> {sesgo}
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                            # Histograma
+                            st.write("#### Histograma de Frecuencias")
+                            fig, ax = plt.subplots(figsize=(10, 3))
+                            fig.patch.set_facecolor('#050505')
+                            ax.set_facecolor('#111')
+                            counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
+                            try:
+                                ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
+                            except Exception:
+                                pass
+                            ax.axvline(media, color='white', linestyle='--', label='Promedio')
+                            ax.legend(facecolor='#222', labelcolor='white', frameon=False)
+                            ax.axis('off')
+                            st.pyplot(fig)
+                    except Exception as e:
+                        st.error(f"Error al procesar los datos: {e}")
 
 # =============================================================================
 # 2. INFERENCIA INTELIGENTE (Azul)
