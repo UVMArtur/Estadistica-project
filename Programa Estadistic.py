@@ -73,4 +73,7 @@ with tab3:
     - Cálculo de media, mediana, desviación estándar y varianza
     - Cálculo de mínimo, máximo y rango
     - Organización en pestañas (entrada de datos, resultados e información)
+
+    maybe hola pa
+    
     """)
