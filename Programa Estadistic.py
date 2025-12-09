@@ -6,6 +6,7 @@ import numpy as np
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="StatCalc Dark",
+    page_icon="📊", 
     layout="centered"
 )
 
@@ -135,7 +136,7 @@ st.markdown("""
 # 3. LÓGICA DE LA APLICACIÓN
 # -----------------------------------------------------------------------------
 
-st.title("💜 Calculadora Estadística")
+st.title("Calculadora Estadística")
 st.markdown("---")
 
 # Creación de Pestañas
