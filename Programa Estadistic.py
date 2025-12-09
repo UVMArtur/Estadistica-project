@@ -5,27 +5,10 @@ import matplotlib.pyplot as plt
 import math
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURACIÓN E INICIALIZACIÓN
+# 1. CONFIGURACIÓN Y ESTILO (ESTABLE)
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="StatSuite Reactiva", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="StatSuite Pro", page_icon="💠", layout="wide")
 
-# Inicializar estados para la lógica reactiva si no existen
-def init_state(keys):
-    for k in keys:
-        if k not in st.session_state:
-            st.session_state[k] = 0.0
-
-# Claves de los inputs para controlar su estado
-state_keys = [
-    'inf_media', 'inf_prop', 'inf_sigma', 'inf_s', # Inferencia
-    'size_sigma', 'size_prop', # Tamaño Muestra
-    'comp_s1', 'comp_s2' # Comparación
-]
-init_state(state_keys)
-
-# -----------------------------------------------------------------------------
-# 2. ESTILOS CSS (DARK NEON + UI REACTIVA)
-# -----------------------------------------------------------------------------
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
@@ -39,18 +22,20 @@ st.markdown("""
         header, footer {visibility: hidden;}
         .stApp { background-color: #050505; }
 
-        /* PESTAÑAS */
+        /* PESTAÑAS ESTILIZADAS */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
-            background-color: #0f0f0f;
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid #333;
+            gap: 15px;
+            background-color: #0a0a0a;
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid #222;
         }
         .stTabs [data-baseweb="tab"] {
-            border-radius: 6px;
-            color: #666;
+            height: 50px;
+            border-radius: 8px;
             font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
         }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             background-color: #222;
@@ -58,42 +43,36 @@ st.markdown("""
             border-bottom: 2px solid white;
         }
 
-        /* INPUTS - Estado Normal */
-        .stNumberInput input {
+        /* INPUTS */
+        .stNumberInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
             background-color: #111 !important;
             color: white !important;
             border: 1px solid #333 !important;
             border-radius: 8px;
         }
-        
-        /* INPUTS - Deshabilitados (Visualmente grisáceos) */
-        div[data-testid="stNumberInput"] div[aria-disabled="true"] input {
-            background-color: #1a1a1a !important;
-            color: #444 !important; /* Texto oscuro para indicar inactivo */
-            border-color: #222 !important;
-            cursor: not-allowed;
-        }
 
-        /* TARJETAS DE RESULTADO */
+        /* TARJETAS DE RESULTADOS (Blancas para contraste) */
         .result-card {
-            background-color: #151515;
+            background-color: #ffffff;
+            color: #1f2937;
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border-top: 5px solid;
         }
-        .card-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; opacity: 0.8; }
-        .card-value { font-size: 1.8rem; font-weight: 700; color: #fff; }
+        .card-label { font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #6b7280; margin-bottom: 5px; }
+        .card-value { font-size: 1.8rem; font-weight: 800; color: #111; }
 
-        /* COLORES DE ACENTO */
-        .neon-blue { border-top: 3px solid #3b82f6; }
-        .neon-green { border-top: 3px solid #22c55e; }
-        .neon-red { border-top: 3px solid #ef4444; }
+        /* COLORES TEMÁTICOS */
+        .neon-purple { border-color: #a855f7; }
+        .neon-blue { border-color: #3b82f6; }
+        .neon-red { border-color: #ef4444; }
+        .neon-green { border-color: #22c55e; }
 
-        /* TEXTO DE INTERPRETACIÓN */
-        .smart-text {
+        /* CAJA DE TEXTO SIMPLE */
+        .simple-text {
             background: rgba(255,255,255,0.03);
             border-left: 3px solid #666;
             padding: 15px;
@@ -101,24 +80,29 @@ st.markdown("""
             margin-top: 15px;
             color: #ccc;
         }
-
+        
         /* BOTONES */
         div.stButton > button {
             width: 100%;
             border-radius: 8px;
             font-weight: 600;
-            padding: 10px;
+            padding: 12px;
+            background-color: #222;
+            color: white;
+            border: 1px solid #444;
+        }
+        div.stButton > button:hover {
+            border-color: #fff;
         }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚡ StatSuite Reactiva")
-st.markdown("El sistema detecta automáticamente qué fórmula usar según los campos que llenes.")
+st.title("💠 StatSuite Pro")
 
-# Función auxiliar para tarjetas
-def card(label, value, style="neon-blue"):
+# Función de tarjeta
+def card(label, value, theme="neon-blue"):
     return f"""
-    <div class="result-card {style}">
+    <div class="result-card {theme}">
         <div class="card-label">{label}</div>
         <div class="card-value">{value}</div>
     </div>
@@ -127,260 +111,239 @@ def card(label, value, style="neon-blue"):
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE PESTAÑAS
 # -----------------------------------------------------------------------------
-tab_inf, tab_size, tab_comp = st.tabs([
-    "🔍 Inferencia Inteligente (1 Pob)", 
-    "📏 Tamaño de Muestra", 
-    "⚖️ Comparación (2 Pob)"
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🟣 Descriptiva (Datos)", 
+    "🔵 Inferencia (Inteligente)", 
+    "🔴 Comparación (2 Pob)", 
+    "🟢 Tamaño Muestra"
 ])
 
 # =============================================================================
-# PESTAÑA 1: INFERENCIA INTELIGENTE (Lógica Z/T y Media/Prop Automática)
+# PESTAÑA 1: DESCRIPTIVA (Clásica y Sencilla)
 # =============================================================================
-with tab_inf:
-    st.markdown("<h3 style='color:#3b82f6'>Inferencia de Una Población</h3>", unsafe_allow_html=True)
+with tab1:
+    st.markdown("<h3 style='color:#a855f7'>Estadística Descriptiva</h3>", unsafe_allow_html=True)
     
-    # --- CAMPOS COMPARTIDOS ---
-    c_common1, c_common2 = st.columns(2)
-    n = c_common1.number_input("Tamaño de Muestra (n)", min_value=0, step=1, key="inf_n")
-    conf = c_common2.selectbox("Nivel de Confianza", [0.90, 0.95, 0.99], index=1, key="inf_conf")
+    col_in, col_out = st.columns([1, 2], gap="large")
+    with col_in:
+        st.info("Pega tus datos numéricos separados por comas.")
+        input_desc = st.text_area("Datos:", height=150, placeholder="Ej: 10, 15, 12, 18, 20")
+        btn_calc_desc = st.button("Analizar Datos", key="btn1")
+
+    with col_out:
+        if btn_calc_desc:
+            if not input_desc.strip():
+                st.warning("Escribe algunos números para comenzar.")
+            else:
+                try:
+                    data = np.array([float(x.strip()) for x in input_desc.split(",") if x.strip()])
+                    if len(data) > 0:
+                        media = np.mean(data)
+                        mediana = np.median(data)
+                        desv = np.std(data, ddof=1)
+                        var = np.var(data, ddof=1)
+                        rango = np.max(data) - np.min(data)
+                        
+                        # Tarjetas
+                        c1, c2, c3 = st.columns(3)
+                        c1.markdown(card("Promedio (Media)", f"{media:.2f}", "neon-purple"), unsafe_allow_html=True)
+                        c2.markdown(card("Centro (Mediana)", f"{mediana:.2f}", "neon-purple"), unsafe_allow_html=True)
+                        c3.markdown(card("Total Datos", f"{len(data)}", "neon-purple"), unsafe_allow_html=True)
+                        
+                        c4, c5, c6 = st.columns(3)
+                        c4.markdown(card("Desviación Estándar", f"{desv:.2f}", "neon-purple"), unsafe_allow_html=True)
+                        c5.markdown(card("Varianza", f"{var:.2f}", "neon-purple"), unsafe_allow_html=True)
+                        c6.markdown(card("Rango", f"{rango:.2f}", "neon-purple"), unsafe_allow_html=True)
+
+                        # Gráfico Integrado
+                        fig, ax = plt.subplots(figsize=(10, 3))
+                        fig.patch.set_facecolor('#050505')
+                        ax.set_facecolor('#111')
+                        counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
+                        ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
+                        ax.axvline(media, color='white', linestyle='--', label='Media')
+                        ax.axis('off')
+                        st.pyplot(fig)
+                except:
+                    st.error("Revisa que solo haya números y comas.")
+
+# =============================================================================
+# PESTAÑA 2: INFERENCIA (LÓGICA AUTOMÁTICA AQUÍ SOLAMENTE)
+# =============================================================================
+with tab2:
+    st.markdown("<h3 style='color:#3b82f6'>Inferencia Estadística</h3>", unsafe_allow_html=True)
+    st.markdown("Elige qué tipo de dato tienes y el sistema elegirá la fórmula correcta (Z o T) automáticamente.")
+
+    # Selector simple para limpiar la vista
+    tipo_dato = st.radio("Tipo de Dato:", ["Promedio (Media)", "Porcentaje (Proporción)", "Posición (Z)"], horizontal=True)
     
     st.markdown("---")
-    
-    # --- LÓGICA DE EXCLUSIÓN MUTUA (MEDIA VS PROPORCIÓN) ---
-    # Si hay valor en Media, bloqueamos Proporción. Y viceversa.
-    has_media_data = st.session_state.inf_media != 0.0
-    has_prop_data = st.session_state.inf_prop != 0.0
 
-    col_A, col_B = st.columns(2)
-    
-    with col_A:
-        st.markdown("##### 📊 Datos Cuantitativos (Media)")
-        # Campo A: Media Muestral
-        media = st.number_input(
-            "Media Muestral (x̄)", 
-            key="inf_media", 
-            disabled=has_prop_data, # SE BLOQUEA SI HAY PROPORCIÓN
-            help="Si escribes aquí, se desactivará la sección de Proporción."
-        )
+    # --- LÓGICA AUTOMÁTICA PARA MEDIAS (Z vs T) ---
+    if tipo_dato == "Promedio (Media)":
+        c1, c2, c3 = st.columns(3)
+        media = c1.number_input("Promedio Muestral", 0.0)
+        n = c2.number_input("Tamaño de Muestra", 0)
+        conf = c3.selectbox("Nivel de Confianza", [0.90, 0.95, 0.99], index=1)
         
-        # --- LÓGICA Z vs T ---
-        # Si hay Sigma, bloqueamos S. Si hay S, bloqueamos Sigma.
-        has_sigma = st.session_state.inf_sigma != 0.0
-        has_s = st.session_state.inf_s != 0.0
+        st.markdown("##### Desviación Estándar (Llena solo una)")
+        c_sig, c_s = st.columns(2)
+        # Aquí está la magia: Detectamos cuál llenó el usuario
+        sigma = c_sig.number_input("Poblacional (σ) -> Usa Z", 0.0, help="Si conoces la desviación histórica/poblacional.")
+        s = c_s.number_input("Muestral (s) -> Usa T", 0.0, help="Si la desviación viene de la propia muestra.")
         
-        # Campo C: Sigma (Poblacional)
-        sigma = st.number_input(
-            "Desviación Estándar Poblacional (σ)", 
-            key="inf_sigma",
-            disabled=has_s or has_prop_data, # Se bloquea si hay 's' o si estamos en modo proporción
-            help="Llenar esto activa la fórmula Z."
-        )
-        
-        # Campo D: S (Muestral)
-        s = st.number_input(
-            "Desviación Estándar Muestral (s)", 
-            key="inf_s",
-            disabled=has_sigma or has_prop_data, # Se bloquea si hay 'sigma' o si estamos en modo proporción
-            help="Llenar esto activa la fórmula T-Student."
-        )
-
-    with col_B:
-        st.markdown("##### 🥧 Datos Cualitativos (Proporción)")
-        # Campo B: Proporción
-        prop = st.number_input(
-            "Proporción de Éxito (p) [0.0 - 1.0]", 
-            min_value=0.0, max_value=1.0, step=0.01,
-            key="inf_prop",
-            disabled=has_media_data, # SE BLOQUEA SI HAY MEDIA
-            help="Si escribes aquí, se desactivará la sección de Media."
-        )
-        
-        st.write("")
-        st.write("")
-        # Botón de Reset para limpiar campos trabados
-        if st.button("🔄 Limpiar Todos los Campos", key="reset_inf"):
-            for k in ['inf_media', 'inf_prop', 'inf_sigma', 'inf_s']:
-                st.session_state[k] = 0.0
-            st.rerun()
-
-    # --- RESULTADOS AUTOMÁTICOS ---
-    st.markdown("### Resultados Calculados")
-    
-    if n > 0:
-        # CASO 1: INTERVALO DE PROPORCIÓN
-        if prop > 0:
-            q = 1 - prop
-            se = np.sqrt((prop * q) / n)
-            z_score = stats.norm.ppf((1 + conf) / 2)
-            margen = z_score * se
-            
-            c1, c2 = st.columns(2)
-            c1.markdown(card("Límite Inferior", f"{(prop - margen)*100:.2f}%"), unsafe_allow_html=True)
-            c2.markdown(card("Límite Superior", f"{(prop + margen)*100:.2f}%"), unsafe_allow_html=True)
-            st.success(f"✅ Detectado: Intervalo para Proporción (Usando Z). Margen de error: {margen:.4f}")
-
-        # CASO 2: INTERVALO DE MEDIA (Z o T)
-        elif media != 0:
-            # Sub-caso: Z (Con Sigma)
-            if sigma > 0:
-                se = sigma / np.sqrt(n)
-                z_score = stats.norm.ppf((1 + conf) / 2)
-                margen = z_score * se
-                tipo = "Normal (Z) - Sigma Conocida"
-            # Sub-caso: T (Con S)
-            elif s > 0:
-                se = s / np.sqrt(n)
-                t_score = stats.t.ppf((1 + conf) / 2, df=n-1)
-                margen = t_score * se
-                tipo = "T-Student - Sigma Desconocida"
-            else:
-                st.warning("⚠️ Falta la Desviación Estándar (Poblacional o Muestral) para calcular.")
+        if st.button("Calcular Intervalo", key="btn_inf_smart"):
+            if n > 1:
                 margen = 0
-                tipo = "Pendiente"
+                metodo = ""
+                
+                # AUTOMATIZACIÓN DE FÓRMULA
+                if sigma > 0:
+                    se = sigma / np.sqrt(n)
+                    z_val = stats.norm.ppf((1 + conf)/2)
+                    margen = z_val * se
+                    metodo = "Fórmula Z (Sigma conocida)"
+                elif s > 0:
+                    se = s / np.sqrt(n)
+                    # Si n >= 30 usa Z, si n < 30 usa T (Estándar general)
+                    if n >= 30:
+                        z_val = stats.norm.ppf((1 + conf)/2)
+                        margen = z_val * se
+                        metodo = "Fórmula Z (Muestra grande)"
+                    else:
+                        t_val = stats.t.ppf((1 + conf)/2, df=n-1)
+                        margen = t_val * se
+                        metodo = "Fórmula T-Student (Muestra pequeña)"
+                else:
+                    st.warning("⚠️ Debes ingresar alguna desviación estándar (Sigma o S).")
 
-            if margen > 0:
-                c1, c2 = st.columns(2)
-                c1.markdown(card("Límite Inferior", f"{media - margen:.4f}"), unsafe_allow_html=True)
-                c2.markdown(card("Límite Superior", f"{media + margen:.4f}"), unsafe_allow_html=True)
-                st.info(f"ℹ️ Método Detectado: {tipo}")
-        else:
-            st.info("👈 Ingresa datos en el panel izquierdo (Media o Proporción) para comenzar.")
-    else:
-        st.warning("El tamaño de muestra (n) debe ser mayor a 0.")
+                if margen > 0:
+                    col1, col2 = st.columns(2)
+                    col1.markdown(card("Límite Inferior", f"{media - margen:.4f}", "neon-blue"), unsafe_allow_html=True)
+                    col2.markdown(card("Límite Superior", f"{media + margen:.4f}", "neon-blue"), unsafe_allow_html=True)
+                    
+                    st.markdown(f"""
+                    <div class="simple-text" style="border-color: #3b82f6;">
+                        <strong>Interpretación:</strong> Estamos un {conf*100:.0f}% seguros de que el promedio real está entre esos valores.<br>
+                        <em>Sistema: Se detectó y usó {metodo}.</em>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    # --- LÓGICA ESTÁNDAR PARA PROPORCIONES ---
+    elif tipo_dato == "Porcentaje (Proporción)":
+        c1, c2, c3 = st.columns(3)
+        prop = c1.number_input("Proporción (0.0 a 1.0)", 0.0, 1.0, 0.0)
+        n = c2.number_input("Tamaño Muestra", 0)
+        conf = c3.selectbox("Nivel de Confianza", [0.90, 0.95, 0.99], index=1)
+        
+        if st.button("Calcular Intervalo"):
+            if n > 0:
+                q = 1 - prop
+                se = np.sqrt((prop*q)/n)
+                z_val = stats.norm.ppf((1+conf)/2)
+                margen = z_val * se
+                
+                col1, col2 = st.columns(2)
+                col1.markdown(card("Mínimo", f"{(prop-margen)*100:.2f}%", "neon-blue"), unsafe_allow_html=True)
+                col2.markdown(card("Máximo", f"{(prop+margen)*100:.2f}%", "neon-blue"), unsafe_allow_html=True)
+    
+    # --- LÓGICA SIMPLE PARA Z ---
+    elif tipo_dato == "Posición (Z)":
+        c1, c2, c3 = st.columns(3)
+        val = c1.number_input("Dato", 0.0)
+        mu = c2.number_input("Promedio Población", 0.0)
+        sig = c3.number_input("Desviación Población", 1.0)
+        
+        if st.button("Calcular Z"):
+            z = (val - mu) / sig
+            st.markdown(card("Puntaje Z", f"{z:.4f}", "neon-blue"), unsafe_allow_html=True)
 
 # =============================================================================
-# PESTAÑA 2: TAMAÑO DE MUESTRA (Exclusión Sigma vs Proporción)
+# PESTAÑA 3: COMPARACIÓN (Clásica por Menú)
 # =============================================================================
-with tab_size:
-    st.markdown("<h3 style='color:#22c55e'>Calculadora de 'n'</h3>", unsafe_allow_html=True)
-
-    # CAMPOS COMPARTIDOS
+with tab3:
+    st.markdown("<h3 style='color:#ef4444'>Comparación de Dos Grupos</h3>", unsafe_allow_html=True)
+    
+    modo_comp = st.selectbox("Selecciona Análisis:", ["Diferencia de Medias", "Diferencia de Proporciones"])
+    st.markdown("---")
+    
     c1, c2 = st.columns(2)
-    error = c1.number_input("Margen de Error Deseado (E)", format="%.4f", value=0.05)
-    conf_z = c2.selectbox("Nivel de Confianza", [0.90, 0.95, 0.99], index=1, key="size_conf")
-
-    st.markdown("---")
     
-    # LÓGICA DE EXCLUSIÓN
-    has_sigma_size = st.session_state.size_sigma != 0.0
-    has_prop_size = st.session_state.size_prop != 0.0
-
-    col_media, col_prop = st.columns(2)
-    
-    with col_media:
-        st.markdown("##### Opción A: Para estimar un Promedio")
-        sigma_est = st.number_input(
-            "Desviación Estándar Estimada (σ)", 
-            key="size_sigma",
-            disabled=has_prop_size,
-            help="Al llenar esto, calcularemos n para medias."
-        )
-    
-    with col_prop:
-        st.markdown("##### Opción B: Para estimar una Proporción")
-        prop_est = st.number_input(
-            "Proporción Estimada (p)", 
-            min_value=0.0, max_value=1.0, step=0.01,
-            key="size_prop",
-            disabled=has_sigma_size,
-            help="Al llenar esto, calcularemos n para proporciones."
-        )
-        
-        if st.button("🔄 Limpiar", key="reset_size"):
-            st.session_state.size_sigma = 0.0
-            st.session_state.size_prop = 0.0
-            st.rerun()
-
-    # CÁLCULO AUTOMÁTICO
-    st.markdown("### Resultado")
-    z_val = stats.norm.ppf((1 + conf_z) / 2)
-    
-    if error > 0:
-        n_final = 0
-        formula = ""
-        
-        # Caso Media
-        if sigma_est > 0:
-            n_final = (z_val**2 * sigma_est**2) / error**2
-            formula = "Media: (Z·σ / E)²"
+    if modo_comp == "Diferencia de Medias":
+        with c1:
+            st.write("Grupo 1")
+            m1 = st.number_input("Media 1", 0.0)
+            s1 = st.number_input("Desv 1", 0.0)
+            n1 = st.number_input("N 1", 0)
+        with c2:
+            st.write("Grupo 2")
+            m2 = st.number_input("Media 2", 0.0)
+            s2 = st.number_input("Desv 2", 0.0)
+            n2 = st.number_input("N 2", 0)
             
-        # Caso Proporción
-        elif prop_est > 0:
-            n_final = (z_val**2 * prop_est * (1 - prop_est)) / error**2
-            formula = "Proporción: (Z² · p · q) / E²"
+        alpha = st.slider("Alpha", 0.01, 0.10, 0.05)
+        
+        if st.button("Comparar Medias"):
+            if n1 > 1 and n2 > 1:
+                se = np.sqrt((s1**2/n1) + (s2**2/n2))
+                t_stat = (m1 - m2) / se
+                p_val = 2 * (1 - stats.t.cdf(abs(t_stat), n1+n2-2))
+                
+                conclusion = "Son Diferentes" if p_val < alpha else "Son Iguales"
+                st.markdown(card("Conclusión", conclusion, "neon-red"), unsafe_allow_html=True)
+                st.info(f"Valor P: {p_val:.4f}")
+
+    else: # Proporciones
+        with c1:
+            x1 = st.number_input("Éxitos 1", 0)
+            nt1 = st.number_input("Total 1", 0)
+        with c2:
+            x2 = st.number_input("Éxitos 2", 0)
+            nt2 = st.number_input("Total 2", 0)
             
-        if n_final > 0:
-            st.markdown(card("Muestra Necesaria", f"{math.ceil(n_final)}", "neon-green"), unsafe_allow_html=True)
-            st.caption(f"Fórmula aplicada: {formula}")
-        else:
-            st.info("Ingresa la Desviación o la Proporción estimada.")
+        alpha = st.slider("Alpha", 0.01, 0.10, 0.05)
+        
+        if st.button("Comparar Porcentajes"):
+            if nt1 > 0 and nt2 > 0:
+                p1, p2 = x1/nt1, x2/nt2
+                pp = (x1+x2)/(nt1+nt2)
+                se = np.sqrt(pp*(1-pp)*(1/nt1 + 1/nt2))
+                z = (p1 - p2) / se
+                p_val = 2 * (1 - stats.norm.cdf(abs(z)))
+                
+                conclusion = "Son Diferentes" if p_val < alpha else "Son Iguales"
+                st.markdown(card("Conclusión", conclusion, "neon-red"), unsafe_allow_html=True)
+                st.info(f"Valor P: {p_val:.4f}")
+
+# =============================================================================
+# PESTAÑA 4: TAMAÑO DE MUESTRA (Verde)
+# =============================================================================
+with tab4:
+    st.markdown("<h3 style='color:#22c55e'>Calculadora de Muestra</h3>", unsafe_allow_html=True)
+    
+    target = st.radio("Objetivo:", ["Estimar un Promedio", "Estimar un Porcentaje"])
+    
+    col_a, col_b = st.columns(2)
+    error = col_a.number_input("Error Aceptable (Ej: 0.05)", 0.0, format="%.4f")
+    conf = col_b.selectbox("Confianza", [0.90, 0.95, 0.99], index=1, key="size_conf")
+    
+    sigma = 0
+    p_est = 0.5
+    
+    if target == "Estimar un Promedio":
+        sigma = st.number_input("Desviación Estimada", 0.0)
     else:
-        st.warning("El margen de error debe ser mayor a 0.")
-
-# =============================================================================
-# PESTAÑA 3: COMPARACIÓN (2 POBLACIONES)
-# =============================================================================
-with tab_comp:
-    st.markdown("<h3 style='color:#ef4444'>Comparación de Grupos</h3>", unsafe_allow_html=True)
-    st.markdown("El sistema detecta si comparas Medias o Proporciones basándose en si llenas o no las desviaciones estándar.")
-
-    c_g1, c_g2 = st.columns(2)
-    
-    with c_g1:
-        st.markdown("#### Grupo 1")
-        n1 = st.number_input("Tamaño (n1)", 0, key="c_n1")
-        val1 = st.number_input("Media o Éxitos (x1)", 0.0, key="c_v1")
-        # El campo mágico
-        s1 = st.number_input("Desviación Estándar (s1) [Dejar 0 si es Proporción]", 0.0, key="comp_s1")
-
-    with c_g2:
-        st.markdown("#### Grupo 2")
-        n2 = st.number_input("Tamaño (n2)", 0, key="c_n2")
-        val2 = st.number_input("Media o Éxitos (x2)", 0.0, key="c_v2")
-        # El campo mágico
-        s2 = st.number_input("Desviación Estándar (s2) [Dejar 0 si es Proporción]", 0.0, key="comp_s2")
-
-    alpha = st.slider("Alpha", 0.01, 0.10, 0.05)
-    
-    st.markdown("---")
-
-    # LÓGICA DE DETECCIÓN
-    if n1 > 0 and n2 > 0:
-        # Si las desviaciones son 0, asumimos que el usuario quiere PROPORCIONES
-        if s1 == 0 and s2 == 0:
-            st.markdown("⚙️ **Modo Detectado: Diferencia de Proporciones** (Porque no hay desviaciones)")
-            # Asumimos que val1 y val2 son conteos de éxitos
-            p1 = val1 / n1
-            p2 = val2 / n2
-            
-            # Validación simple
-            if p1 > 1 or p2 > 1:
-                st.error("Error: Si es proporción, los éxitos (x) no pueden ser mayores que la muestra (n).")
-            else:
-                pp = (val1 + val2) / (n1 + n2)
-                se = np.sqrt(pp * (1 - pp) * (1/n1 + 1/n2))
-                if se > 0:
-                    z = (p1 - p2) / se
-                    p_val = 2 * (1 - stats.norm.cdf(abs(z)))
-                    
-                    lbl = "Diferente" if p_val < alpha else "Iguales"
-                    color = "neon-red" if p_val < alpha else "neon-green"
-                    
-                    c1, c2 = st.columns(2)
-                    c1.markdown(card("Valor P", f"{p_val:.4f}", color), unsafe_allow_html=True)
-                    c2.markdown(card("Conclusión", lbl, color), unsafe_allow_html=True)
+        p_est = st.number_input("Proporción Estimada (0.5 si no sabes)", 0.0, 1.0, 0.5)
         
-        # Si hay desviaciones, asumimos MEDIAS
+    if st.button("Calcular N"):
+        z = stats.norm.ppf((1+conf)/2)
+        n = 0
+        if error > 0:
+            if target == "Estimar un Promedio":
+                n = (z**2 * sigma**2) / error**2
+            else:
+                n = (z**2 * p_est * (1-p_est)) / error**2
+            
+            st.markdown(card("Personas a Encuestar", f"{math.ceil(n)}", "neon-green"), unsafe_allow_html=True)
         else:
-            st.markdown("⚙️ **Modo Detectado: Diferencia de Medias** (Se detectaron desviaciones)")
-            se = np.sqrt((s1**2/n1) + (s2**2/n2))
-            t_stat = (val1 - val2) / se
-            df = n1 + n2 - 2
-            p_val = 2 * (1 - stats.t.cdf(abs(t_stat), df))
-            
-            lbl = "Diferente" if p_val < alpha else "Iguales"
-            color = "neon-red" if p_val < alpha else "neon-green"
-            
-            c1, c2 = st.columns(2)
-            c1.markdown(card("Valor P", f"{p_val:.4f}", color), unsafe_allow_html=True)
-            c2.markdown(card("Conclusión", lbl, color), unsafe_allow_html=True)
+            st.warning("El error debe ser mayor a 0.")
