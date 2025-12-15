@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# ESTILOS CSS MEJORADOS
+# ESTILOS CSS - TEMA OSCURO
 # -----------------------------------------------------------------------------
 st.markdown("""
     <style>
@@ -24,20 +24,20 @@ st.markdown("""
         /* RESET GENERAL */
         html, body, [class*="css"] {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #ffffff;
-            color: #1f2937;
+            background-color: #000000;
+            color: #e5e7eb;
         }
         
         header, footer {visibility: hidden;}
         .stApp { 
-            background-color: #f9fafb;
+            background-color: #000000;
         }
 
         /* TÍTULO PRINCIPAL */
         h1 {
             font-size: 1.5rem !important;
             font-weight: 600 !important;
-            color: #111827 !important;
+            color: #ffffff !important;
             margin-bottom: 2rem !important;
         }
 
@@ -46,7 +46,7 @@ st.markdown("""
             gap: 8px;
             background-color: transparent;
             padding: 0;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #262626;
             margin-bottom: 2rem;
         }
         .stTabs [data-baseweb="tab"] {
@@ -62,13 +62,13 @@ st.markdown("""
             transition: all 0.2s;
         }
         .stTabs [data-baseweb="tab"]:hover {
-            color: #111827;
-            background-color: #f3f4f6;
+            color: #ffffff;
+            background-color: #1a1a1a;
         }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             background-color: transparent;
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
         }
 
         /* Ocultar flechas de inputs numéricos */
@@ -85,9 +85,9 @@ st.markdown("""
         .stNumberInput > div > div > input,
         .stTextArea textarea,
         .stSelectbox select {
-            background-color: #ffffff !important;
-            color: #1f2937 !important;
-            border: 1px solid #d1d5db !important;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
             border-radius: 8px !important;
             font-size: 0.875rem !important;
             padding: 10px 12px !important;
@@ -96,8 +96,8 @@ st.markdown("""
         
         .stNumberInput > div > div > input:focus,
         .stTextArea textarea:focus {
-            border-color: #2563eb !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
             outline: none !important;
         }
 
@@ -107,22 +107,23 @@ st.markdown("""
         .stSelectbox label {
             font-size: 0.875rem !important;
             font-weight: 500 !important;
-            color: #374151 !important;
+            color: #d1d5db !important;
             margin-bottom: 6px !important;
         }
 
-        /* TARJETAS DE RESULTADOS - ESTILO LIMPIO */
+        /* TARJETAS DE RESULTADOS - TEMA OSCURO */
         .metric-card {
-            background-color: #ffffff;
+            background-color: #1a1a1a;
             padding: 20px;
             border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #262626;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
             margin-bottom: 16px;
             transition: all 0.2s;
         }
         .metric-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #333333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             transform: translateY(-2px);
         }
         .metric-label {
@@ -130,52 +131,52 @@ st.markdown("""
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #6b7280;
+            color: #9ca3af;
             margin-bottom: 8px;
         }
         .metric-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #111827;
+            color: #ffffff;
             line-height: 1;
         }
         .metric-sub {
             font-size: 0.8rem;
-            color: #9ca3af;
+            color: #6b7280;
             margin-top: 4px;
         }
 
         /* COLORES DE ACENTO */
-        .accent-blue { color: #2563eb; }
-        .accent-green { color: #059669; }
-        .accent-red { color: #dc2626; }
-        .accent-purple { color: #7c3aed; }
-        .border-blue { border-left: 4px solid #2563eb !important; }
-        .border-green { border-left: 4px solid #059669 !important; }
-        .border-red { border-left: 4px solid #dc2626 !important; }
-        .border-purple { border-left: 4px solid #7c3aed !important; }
+        .accent-blue { color: #3b82f6; }
+        .accent-green { color: #10b981; }
+        .accent-red { color: #ef4444; }
+        .accent-purple { color: #a855f7; }
+        .border-blue { border-left: 4px solid #3b82f6 !important; }
+        .border-green { border-left: 4px solid #10b981 !important; }
+        .border-red { border-left: 4px solid #ef4444 !important; }
+        .border-purple { border-left: 4px solid #a855f7 !important; }
 
         /* CAJAS DE INFORMACIÓN */
         .info-box {
-            background: #eff6ff;
-            border-left: 4px solid #2563eb;
+            background: #0f172a;
+            border-left: 4px solid #3b82f6;
             padding: 16px;
             border-radius: 8px;
             margin: 16px 0;
             font-size: 0.875rem;
-            color: #1e40af;
+            color: #93c5fd;
             line-height: 1.6;
         }
 
         .interpretation-box {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+            background: #1a1a1a;
+            border: 1px solid #262626;
             padding: 20px;
             border-radius: 12px;
             margin-top: 24px;
             font-size: 0.875rem;
             line-height: 1.7;
-            color: #374151;
+            color: #d1d5db;
         }
 
         /* BOTONES MEJORADOS */
@@ -185,15 +186,15 @@ st.markdown("""
             font-weight: 600;
             font-size: 0.875rem;
             padding: 12px 24px;
-            background-color: #2563eb;
+            background-color: #3b82f6;
             color: white;
             border: none;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         div.stButton > button:hover {
-            background-color: #1d4ed8;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            background-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
             transform: translateY(-1px);
         }
 
@@ -201,10 +202,10 @@ st.markdown("""
         .section-header {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #111827;
+            color: #ffffff;
             margin: 32px 0 16px 0;
             padding-bottom: 8px;
-            border-bottom: 2px solid #e5e7eb;
+            border-bottom: 2px solid #262626;
         }
 
         /* RADIO BUTTONS Y CHECKBOXES */
@@ -212,13 +213,21 @@ st.markdown("""
         .stCheckbox > label {
             font-size: 0.875rem !important;
             font-weight: 500 !important;
+            color: #d1d5db !important;
         }
 
         /* DIVISOR */
         hr {
             margin: 32px 0;
             border: none;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #262626;
+        }
+
+        /* ALERTS */
+        .stAlert {
+            background-color: #1a1a1a !important;
+            border: 1px solid #333333 !important;
+            color: #e5e7eb !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -344,21 +353,21 @@ with tab1:
                             # Histograma
                             st.markdown("<div class='section-header'>Histograma de Frecuencias</div>", unsafe_allow_html=True)
                             fig, ax = plt.subplots(figsize=(10, 4))
-                            fig.patch.set_facecolor('#ffffff')
-                            ax.set_facecolor('#f9fafb')
-                            counts, bins, patches = ax.hist(data, bins='auto', color='#2563eb', edgecolor='white', alpha=0.9, linewidth=1.5)
+                            fig.patch.set_facecolor('#000000')
+                            ax.set_facecolor('#0a0a0a')
+                            counts, bins, patches = ax.hist(data, bins='auto', color='#3b82f6', edgecolor='#1a1a1a', alpha=0.9, linewidth=1.5)
                             try:
-                                ax.bar_label(patches, fmt='%.0f', color='#1f2937', padding=3, fontweight='600', fontsize=9)
+                                ax.bar_label(patches, fmt='%.0f', color='#ffffff', padding=3, fontweight='600', fontsize=9)
                             except Exception:
                                 pass
-                            ax.axvline(media, color='#dc2626', linestyle='--', linewidth=2, label=f'Promedio: {media:.2f}')
-                            ax.legend(loc='upper right', frameon=True, facecolor='white', edgecolor='#e5e7eb')
+                            ax.axvline(media, color='#ef4444', linestyle='--', linewidth=2, label=f'Promedio: {media:.2f}')
+                            ax.legend(loc='upper right', frameon=True, facecolor='#1a1a1a', edgecolor='#333333', labelcolor='white')
                             ax.spines['top'].set_visible(False)
                             ax.spines['right'].set_visible(False)
-                            ax.spines['left'].set_color('#d1d5db')
-                            ax.spines['bottom'].set_color('#d1d5db')
-                            ax.tick_params(colors='#6b7280')
-                            ax.grid(axis='y', alpha=0.2, color='#d1d5db')
+                            ax.spines['left'].set_color('#333333')
+                            ax.spines['bottom'].set_color('#333333')
+                            ax.tick_params(colors='#9ca3af')
+                            ax.grid(axis='y', alpha=0.1, color='#333333')
                             st.pyplot(fig)
                     except Exception as e:
                         st.error(f"❌ Error al procesar los datos: {e}")
@@ -585,149 +594,4 @@ with tab3:
             x2 = st.number_input("Éxitos 2 (x₂)", step=1.0, format="%.0f", key="x2")
             nt2 = st.number_input("Total 2 (n₂)", value=30.0, step=1.0, key="nt2")
             
-        alpha = st.number_input("Nivel de Significancia (α)", value=0.05, step=0.01, key="alpha_prop")
-        
-        if st.button("Comparar Porcentajes", type="primary"):
-            try:
-                nt1_int = int(nt1)
-                nt2_int = int(nt2)
-                if nt1_int <= 0 or nt2_int <= 0:
-                    st.error("❌ Los totales deben ser mayores que 0.")
-                    st.stop()
-            except Exception:
-                st.error("❌ Totales inválidos.")
-                st.stop()
-
-            p1 = x1/nt1_int
-            p2 = x2/nt2_int
-            pp = (x1 + x2) / (nt1_int + nt2_int)
-            se = math.sqrt(pp*(1-pp) * (1/nt1_int + 1/nt2_int))
-            if se == 0:
-                st.error("❌ Error estándar = 0.")
-            else:
-                z = (p1 - p2) / se
-                p_val = 2 * (1 - stats.norm.cdf(abs(z)))
-                
-                conclusion = "DIFERENCIA SIGNIFICATIVA" if p_val < alpha else "NO HAY DIFERENCIA"
-                color = "red" if p_val < alpha else "green"
-                
-                st.markdown("### Resultados")
-                c1, c2 = st.columns(2)
-                c1.markdown(metric_card("Diferencia %", f"{(p1-p2)*100:.2f}%", "", "blue"), unsafe_allow_html=True)
-                c2.markdown(metric_card("Valor P", f"{p_val:.4f}", conclusion, color), unsafe_allow_html=True)
-
-# =============================================================================
-# 4. TAMAÑO DE MUESTRA
-# =============================================================================
-with tab4:
-    st.markdown("<div class='section-header'>Calculadora de Tamaño de Muestra</div>", unsafe_allow_html=True)
-    
-    target = st.radio("Objetivo:", ["Estimar Promedio", "Estimar Proporción"], horizontal=True)
-    
-    st.markdown("### Parámetros")
-    c1, c2 = st.columns(2)
-    error = c1.number_input("Margen de Error (ME)", value=0.05, step=0.001, format="%.4f")
-    conf = c2.number_input("Nivel de Confianza (%)", value=95.0, step=1.0) / 100
-    
-    if target == "Estimar Promedio":
-        sigma = st.number_input("Desviación Estimada (σ)", value=10.0, step=0.1)
-        if st.button("Calcular Tamaño de Muestra", type="primary"):
-            if error <= 0:
-                st.error("❌ El margen de error debe ser mayor que 0.")
-            else:
-                z = stats.norm.ppf((1+conf)/2)
-                n = (z**2 * sigma**2) / (error**2)
-                st.markdown(metric_card("Tamaño de Muestra (n)", f"{math.ceil(n)}", "Personas/Datos necesarios", "green"), unsafe_allow_html=True)
-    else:
-        p_est = st.number_input("Proporción Estimada (p)", value=0.5, min_value=0.0, max_value=1.0, step=0.01)
-        if st.button("Calcular Tamaño de Muestra", type="primary", key="btn_n_prop"):
-            if error <= 0:
-                st.error("❌ El margen de error debe ser mayor que 0.")
-            else:
-                z = stats.norm.ppf((1+conf)/2)
-                n = (z**2 * p_est * (1-p_est)) / (error**2)
-                st.markdown(metric_card("Tamaño de Muestra (n)", f"{math.ceil(n)}", "Personas/Datos necesarios", "green"), unsafe_allow_html=True)
-
-# =============================================================================
-# 5. LABORATORIO VISUAL
-# =============================================================================
-with tab5:
-    st.markdown("<div class='section-header'>Laboratorio Visual</div>", unsafe_allow_html=True)
-    
-    tool = st.selectbox("Seleccione Simulación:", ["Teorema del Límite Central (TLC)", "Comportamiento Error Estándar"])
-    
-    if tool == "Teorema del Límite Central (TLC)":
-        st.markdown("""
-        <div class='info-box'>
-            <strong>🔬 Teorema del Límite Central</strong><br>
-            Simula cómo el promedio de muchas muestras forma una distribución normal, 
-            sin importar la forma de la población original.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        c1, c2 = st.columns(2)
-        n_sim = c1.number_input("Tamaño de cada muestra (n)", value=30.0, step=1.0, key="n_sim")
-        reps = c2.number_input("Cantidad de muestras", value=1000.0, step=1.0, key="reps")
-        
-        if st.button("Ejecutar Simulación", type="primary"):
-            try:
-                n_sim_int = max(1, int(n_sim))
-                reps_int = max(1, int(reps))
-                pop = np.random.exponential(scale=1.0, size=10000)
-                means = [np.mean(np.random.choice(pop, n_sim_int)) for _ in range(reps_int)]
-                
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-                fig.patch.set_facecolor('#ffffff')
-                
-                ax1.set_facecolor('#f9fafb')
-                ax1.hist(pop, bins=30, color='#6b7280', edgecolor='white', linewidth=1.5, alpha=0.8)
-                ax1.set_title("Población Original (Sesgada)", fontsize=12, fontweight='600', color='#1f2937', pad=15)
-                ax1.spines['top'].set_visible(False)
-                ax1.spines['right'].set_visible(False)
-                ax1.tick_params(colors='#6b7280')
-                ax1.grid(axis='y', alpha=0.2, color='#d1d5db')
-                
-                ax2.set_facecolor('#f9fafb')
-                ax2.hist(means, bins=30, color='#059669', edgecolor='white', linewidth=1.5, alpha=0.8)
-                ax2.set_title(f"Distribución de Medias (n={n_sim_int})", fontsize=12, fontweight='600', color='#1f2937', pad=15)
-                ax2.spines['top'].set_visible(False)
-                ax2.spines['right'].set_visible(False)
-                ax2.tick_params(colors='#6b7280')
-                ax2.grid(axis='y', alpha=0.2, color='#d1d5db')
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-            except Exception as e:
-                st.error(f"❌ Error en la simulación: {e}")
-
-    elif tool == "Comportamiento Error Estándar":
-        st.markdown("""
-        <div class='info-box'>
-            <strong>🔬 Error Estándar vs Tamaño de Muestra</strong><br>
-            Visualiza cómo el error estándar disminuye a medida que aumenta el tamaño de la muestra.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        sigma_sim = st.number_input("Desviación Poblacional (σ)", value=10.0, step=0.1)
-        
-        if st.button("Generar Gráfica", type="primary"):
-            ns = np.arange(1, 201)
-            ees = sigma_sim / np.sqrt(ns)
-            
-            fig, ax = plt.subplots(figsize=(10, 5))
-            fig.patch.set_facecolor('#ffffff')
-            ax.set_facecolor('#f9fafb')
-            ax.plot(ns, ees, color='#2563eb', lw=3, label='Error Estándar')
-            ax.fill_between(ns, ees, alpha=0.2, color='#2563eb')
-            ax.set_xlabel("Tamaño de Muestra (n)", fontsize=11, fontweight='600', color='#374151')
-            ax.set_ylabel("Error Estándar", fontsize=11, fontweight='600', color='#374151')
-            ax.set_title("Relación entre Tamaño de Muestra y Error Estándar", 
-                        fontsize=13, fontweight='600', color='#1f2937', pad=15)
-            ax.grid(color='#e5e7eb', linestyle='--', alpha=0.5)
-            ax.legend(frameon=True, facecolor='white', edgecolor='#e5e7eb')
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['bottom'].set_color('#d1d5db')
-            ax.spines['left'].set_color('#d1d5db')
-            ax.tick_params(colors='#6b7280')
-            st.pyplot(fig)
+        alpha = st.number_input
