@@ -239,21 +239,27 @@ with tab1:
                             """, unsafe_allow_html=True)
 
                             # Histograma
-                            st.write("#### Histograma de Frecuencias")
-                            fig, ax = plt.subplots(figsize=(10, 3))
-                            fig.patch.set_facecolor('#050505')
-                            ax.set_facecolor('#111')
-                            counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
-                            try:
-                                ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
-                            except Exception:
-                                pass
-                            ax.axvline(media, color='white', linestyle='--', label='Promedio')
-                            ax.legend(facecolor='#222', labelcolor='white', frameon=False)
-                            ax.axis('off')
-                            st.pyplot(fig)
-                    except Exception as e:
-                        st.error(f"Error al procesar los datos: {e}")
+                            # Crear Histograma con número controlado de bins
+st.write("#### Histograma de Frecuencias")
+fig, ax = plt.subplots(figsize=(10, 3))
+fig.patch.set_facecolor('#050505')
+ax.set_facecolor('#111')
+
+# Definir un número fijo de categorías (10 en este caso)
+num_bins = max(5, int(np.sqrt(len(data))))  # Número dinámico basado en la raíz cuadrada
+counts, bins, patches = ax.hist(data, bins=num_bins, color='#a855f7', edgecolor='black', alpha=0.9)
+
+# Etiquetar las barras si es posible
+try:
+    ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
+except Exception as e:
+    st.warning(f"Fue imposible etiquetar barras: {e}")
+
+# Línea del promedio
+ax.axvline(media, color='white', linestyle='--', label='Promedio')
+ax.legend(facecolor='#222', labelcolor='white', frameon=False)
+ax.axis('off')  # Oculta ejes
+st.pyplot(fig)
 
 # =============================================================================
 # 2. INFERENCIA INTELIGENTE (Azul)
