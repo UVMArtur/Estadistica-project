@@ -141,11 +141,11 @@ def card(label, value, sub="", color="border-blue"):
 # ESTRUCTURA DE PESTAÑAS
 # -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "🟣 Estadística Descriptiva", 
-    "🔵 Inferencia Inteligente", 
-    "🔴 Comparación (2 Pob)", 
-    "🟢 Tamaño Muestra",
-    "🧪 Laboratorio Visual (TLC)"
+    "Estadística Descriptiva", 
+    "Inferencia de una población", 
+    "Comparación (2 Pob)", 
+    "Tamaño Muestra",
+    "Laboratorio Visual (TLC)"
 ])
 
 # =============================================================================
