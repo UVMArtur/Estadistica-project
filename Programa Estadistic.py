@@ -126,7 +126,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🧬 StatSuite Final")
+st.title("Calculadora de estadistica")
 
 # Función auxiliar de tarjeta HTML
 def card(label, value, sub="", color="border-blue"):
