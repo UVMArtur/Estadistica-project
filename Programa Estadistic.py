@@ -269,13 +269,13 @@ with tab2:
     if tipo_dato == "Promedio (Media)":
         c1, c2, c3 = st.columns(3)
         media = c1.number_input("Promedio Muestral ($\\overline{x}$)", step=0.01, format="%.4f")
-        n = c2.number_input("Tamaño de Muestra ($n$)", value=30.0, step=1.0)
+        n = c2.number_input("Tamaño de Muestra (n)", value=30.0, step=1.0)
         conf = c3.number_input("Nivel de Confianza ($1-\\alpha$)", value=0.95, min_value=0.0, max_value=1.0, step=0.01, help="Por defecto es 0.95 (95%)")
 
         st.markdown("##### Desviación Estándar (Llena solo una)")
         col_sig, col_s = st.columns(2)
         sigma = col_sig.number_input("Poblacional ($\\sigma$) -> Activa Z", step=0.01, format="%.4f", help="Usa esta si conoces la desviación histórica.")
-        s = col_s.number_input("Muestral ($s$) -> Activa T", step=0.01, format="%.4f", help="Usa esta si calculaste la desviación de la muestra actual.")
+        s = col_s.number_input("Muestral (s) -> Activa T", step=0.01, format="%.4f", help="Usa esta si calculaste la desviación de la muestra actual.")
 
         realizar_prueba = st.checkbox("Calcular prueba de hipótesis (H0)", value=False)
         mu_hyp = 0.0
