@@ -140,12 +140,11 @@ def card(label, value, sub="", color="border-blue"):
 # -----------------------------------------------------------------------------
 # ESTRUCTURA DE PESTAÑAS
 # -----------------------------------------------------------------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, = st.tabs([
     "Estadística Descriptiva", 
     "Inferencia de una población", 
     "Comparación (2 Pob)", 
-    "Tamaño Muestra",
-    "Laboratorio Visual (TLC)"
+    "Tamaño Muestra"
 ])
 
 # =============================================================================
@@ -163,7 +162,7 @@ with tab1:
     with col_out:
         if btn_calc_desc:
             if not input_desc.strip():
-                st.warning("⚠️ El campo está vacío.")
+                st.warning("El campo está vacío.")
             else:
                 # Verificación: si se detecta un número con coma decimal, forzar uso de punto
                 # (rechazamos entradas tipo 10,5 que usan coma como decimal)
