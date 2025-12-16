@@ -6,29 +6,22 @@ import matplotlib.pyplot as plt
 import math
 from collections import Counter
 
-# -----------------------------------------------------------------------------
-# 1. CONFIGURACIÓN E IMPORTACIONES
-# -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Calculadora de estadística",
     page_icon="📊",
     layout="wide"
 )
 
-# -----------------------------------------------------------------------------
-# 2. ESTILOS CSS (Ajustado al PDF)
-# -----------------------------------------------------------------------------
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
 
-        /* FONDO PRINCIPAL */
         .stApp {
             background-color: #000000;
             font-family: 'Inter', sans-serif;
+            color: #ffffff;
         }
 
-        /* TÍTULO PRINCIPAL */
         h1 {
             color: #ffffff !important;
             font-weight: 800 !important;
@@ -36,7 +29,6 @@ st.markdown("""
             margin-bottom: 1rem !important;
         }
 
-        /* PESTAÑAS */
         .stTabs [data-baseweb="tab-list"] {
             gap: 20px;
             background-color: transparent;
@@ -51,19 +43,9 @@ st.markdown("""
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             color: #ffffff;
             font-weight: bold;
-            border-bottom: 3px solid #a855f7; /* Morado por defecto */
+            border-bottom: 3px solid #a855f7;
         }
 
-        /* INPUT CARD (Estilo similar a la Pag 1 del PDF) */
-        .input-card {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-        }
-        
-        /* ESTILOS DE INPUTS DE STREAMLIT */
-        /* Hacemos que los inputs parezcan parte de la tarjeta o oscuros según necesidad */
         .stTextArea textarea {
             background-color: #000000 !important;
             color: white !important;
@@ -77,11 +59,10 @@ st.markdown("""
             border: 1px solid #333;
         }
 
-        /* BOTONES (Estilo morado/azul vibrante) */
         div.stButton > button {
-            background-color: #6d28d9; /* Morado fuerte */
+            background-color: #6d28d9;
             color: white;
-            border-radius: 30px; /* Bordes muy redondos como en PDF */
+            border-radius: 30px;
             font-weight: bold;
             border: none;
             padding: 10px 20px;
@@ -92,7 +73,6 @@ st.markdown("""
             background-color: #7c3aed;
         }
 
-        /* RESULT CARDS (Tarjetas de resultados) */
         .result-card {
             background-color: #1a1a1a;
             border: 1px solid #333;
@@ -119,19 +99,17 @@ st.markdown("""
             font-style: italic;
         }
         
-        /* Bordes superiores de colores para resultados */
         .border-purple { border-top: 4px solid #a855f7; }
         .border-blue { border-top: 4px solid #3b82f6; }
         .border-red { border-top: 4px solid #ef4444; }
         .border-green { border-top: 4px solid #22c55e; }
+        .border-yellow { border-top: 4px solid #f59e0b; }
 
     </style>
 """, unsafe_allow_html=True)
 
-# TÍTULO CORREGIDO
 st.title("Calculadora de estadística")
 
-# Función auxiliar para tarjetas HTML
 def card(label, value, sub="", color="border-blue"):
     return f"""
     <div class="result-card {color}">
@@ -141,9 +119,6 @@ def card(label, value, sub="", color="border-blue"):
     </div>
     """
 
-# -----------------------------------------------------------------------------
-# ESTRUCTURA DE PESTAÑAS
-# -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Medidas de tendencia central", 
     "Inferencia estadística", 
@@ -152,11 +127,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Visual LAB"
 ])
 
-# =============================================================================
-# 1. DESCRIPTIVA (Morado)
-# =============================================================================
 with tab1:
-    # Encabezado estilo PDF
     st.markdown("""
         <div style="background-color: white; border-radius: 15px 15px 0 0; padding: 15px;">
             <h3 style="color: #6d28d9; margin:0; font-weight:800;">Datos:</h3>
@@ -167,15 +138,9 @@ with tab1:
         </div>
     """, unsafe_allow_html=True)
     
-    # Área de Input (Fondo blanco simulado con contenedor)
-    container = st.container()
-    with container:
-        # Usamos un estilo especial para este text area
-        input_desc = st.text_area("", height=150, placeholder="Ej: 3.2, 4.5, 7.8", label_visibility="collapsed")
-        
+    input_desc = st.text_area("", height=150, placeholder="Ej: 3.2, 4.5, 7.8", label_visibility="collapsed")
     btn_calc_desc = st.button("Analizar datos", key="btn1")
 
-    # Lógica
     if btn_calc_desc:
         if not input_desc.strip():
             st.warning("⚠️ El campo está vacío.")
@@ -201,7 +166,6 @@ with tab1:
                         media = float(np.mean(data))
                         mediana = float(np.median(data))
                         
-                        # Cálculo de varianza y desviación (Corregido sin etiquetas extra)
                         if n >= 2:
                             desv = float(np.std(data, ddof=1)) 
                             var = float(np.var(data, ddof=1))
@@ -211,7 +175,6 @@ with tab1:
                             
                         ee = desv / math.sqrt(n) if n > 0 else 0.0
                         
-                        # Moda
                         contador = Counter(data)
                         max_freq = max(contador.values())
                         modas = [k for k, v in contador.items() if v == max_freq]
@@ -227,7 +190,6 @@ with tab1:
                             moda_sub = f"{len(modas)} modas"
 
                         st.markdown("---")
-                        # Resultados
                         c1, c2, c3 = st.columns(3)
                         c1.markdown(card("Promedio", f"{media:.2f}", "", "border-purple"), unsafe_allow_html=True)
                         c2.markdown(card("Mediana", f"{mediana:.2f}", "", "border-purple"), unsafe_allow_html=True)
@@ -238,7 +200,6 @@ with tab1:
                         c5.markdown(card("Desviación Std", f"{desv:.2f}", "Muestral" if n>=2 else "Poblacional", "border-purple"), unsafe_allow_html=True)
                         c6.markdown(card("Error Estándar", f"{ee:.4f}", "", "border-purple"), unsafe_allow_html=True)
 
-                        # Histograma
                         fig, ax = plt.subplots(figsize=(10, 3))
                         fig.patch.set_facecolor('#000000')
                         ax.set_facecolor('#000000')
@@ -250,9 +211,6 @@ with tab1:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-# =============================================================================
-# 2. INFERENCIA (Azul)
-# =============================================================================
 with tab2:
     st.markdown("<h3 style='color:#3b82f6'>Inferencia de Una Población</h3>", unsafe_allow_html=True)
     
@@ -300,7 +258,6 @@ with tab2:
 
             if realizar_prueba:
                 test_stat = (media - mu_hyp) / se
-                # Simplificado para visualización
                 p_val = 2 * (1 - stats.norm.cdf(abs(test_stat))) 
                 conclusion = "Rechazar H0" if p_val < (1-conf_dec) else "No rechazar"
                 st.markdown(card("Valor P", f"{p_val:.4f}", conclusion, "border-red"), unsafe_allow_html=True)
@@ -330,9 +287,6 @@ with tab2:
             z = (val - mu) / sig
             st.markdown(card("Puntaje Z", f"{z:.4f}", "", "border-blue"), unsafe_allow_html=True)
 
-# =============================================================================
-# 3. COMPARACIÓN (Rojo)
-# =============================================================================
 with tab3:
     st.markdown("<h3 style='color:#ef4444'>Comparación de Dos Grupos</h3>", unsafe_allow_html=True)
     opcion = st.selectbox("Análisis:", ["Diferencia de Medias", "Diferencia de Proporciones"])
@@ -371,9 +325,6 @@ with tab3:
             p = 2*(1-stats.norm.cdf(abs(z)))
             st.markdown(card("Valor P", f"{p:.4f}", "Significativo" if p<0.05 else "No sig", "border-red"), unsafe_allow_html=True)
 
-# =============================================================================
-# 4. TAMAÑO DE MUESTRA (Verde)
-# =============================================================================
 with tab4:
     st.markdown("<h3 style='color:#22c55e'>Calculadora de Muestra</h3>", unsafe_allow_html=True)
     target = st.radio("Objetivo:", ["Estimar Promedio", "Estimar Proporción"])
@@ -394,17 +345,54 @@ with tab4:
             n = (z**2 * p * (1-p)) / error**2
             st.markdown(card("n", f"{math.ceil(n)}", "", "border-green"), unsafe_allow_html=True)
 
-# =============================================================================
-# 5. VISUAL LAB (Amarillo)
-# =============================================================================
 with tab5:
     st.markdown("<h3 style='color:#f59e0b'>Laboratorio Visual</h3>", unsafe_allow_html=True)
-    if st.button("Simular TLC"):
-        pop = np.random.exponential(1, 1000)
-        means = [np.mean(np.random.choice(pop, 30)) for _ in range(500)]
-        fig, ax = plt.subplots(figsize=(10,3))
-        fig.patch.set_facecolor('black')
-        ax.set_facecolor('black')
-        ax.hist(means, color='#f59e0b', alpha=0.8)
-        ax.axis('off')
-        st.pyplot(fig)
+    tool = st.selectbox("Herramienta:", ["Teorema del Límite Central (TLC)", "Error Estándar vs n"])
+
+    if tool == "Teorema del Límite Central (TLC)":
+        c1, c2 = st.columns(2)
+        n_sim = c1.number_input("Tamaño de muestra (n)", value=30, min_value=1)
+        reps = c2.number_input("Repeticiones", value=1000, min_value=10)
+        
+        if st.button("Simular TLC"):
+            pop = np.random.exponential(scale=1.0, size=10000)
+            means = [np.mean(np.random.choice(pop, int(n_sim))) for _ in range(int(reps))]
+            
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+            fig.patch.set_facecolor('#000000')
+            
+            ax1.set_facecolor('#0a0a0a')
+            ax1.hist(pop, bins=30, color='#666', edgecolor='#999')
+            ax1.set_title("Población Original (Sesgada)", color='white')
+            ax1.axis('off')
+            
+            ax2.set_facecolor('#0a0a0a')
+            ax2.hist(means, bins=30, color='#f59e0b', alpha=0.8, edgecolor='black')
+            ax2.set_title(f"Distribución de Medias", color='white')
+            ax2.axis('off')
+            
+            st.pyplot(fig)
+
+    elif tool == "Error Estándar vs n":
+        sigma_sim = st.number_input("Desviación Poblacional", value=10.0)
+        
+        if st.button("Generar Curva"):
+            ns = np.arange(1, 200)
+            ees = sigma_sim / np.sqrt(ns)
+            
+            fig, ax = plt.subplots(figsize=(8, 3))
+            fig.patch.set_facecolor('#000000')
+            ax.set_facecolor('#0a0a0a')
+            
+            ax.plot(ns, ees, color='#f59e0b', lw=3)
+            ax.set_xlabel("Tamaño de Muestra (n)", color='white')
+            ax.set_ylabel("Error Estándar", color='white')
+            ax.grid(color='#333', linestyle='--', alpha=0.3)
+            
+            ax.spines['bottom'].set_color('#666')
+            ax.spines['left'].set_color('#666')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.tick_params(colors='#999')
+            
+            st.pyplot(fig)
