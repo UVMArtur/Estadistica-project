@@ -9,8 +9,7 @@ import math
 # 1. CONFIGURACIÓN E IMPORTACIONES
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="StatSuite Final",
-    page_icon="🧬",
+    page_title="Calculadora de estadistica",
     layout="wide"
 )
 
