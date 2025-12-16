@@ -238,26 +238,8 @@ with tab1:
                             </div>
                             """, unsafe_allow_html=True)
 
-                            # Histograma
-                            st.write("#### Histograma de Frecuencias")
-                            fig, ax = plt.subplots(figsize=(10, 3))
-                            fig.patch.set_facecolor('#050505')
-                            ax.set_facecolor('#111')
-                            counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
-                            try:
-                                ax.bar_label(patches, fmt='%.0f', color='white', padding=3, fontweight='bold')
-                            except Exception:
-                                pass
-                            ax.axvline(media, color='white', linestyle='--', label='Promedio')
-                            ax.legend(facecolor='#222', labelcolor='white', frameon=False)
-                            ax.axis('off')
-                            st.pyplot(fig)
-                    except Exception as e:
-                        st.error(f"Error al procesar los datos: {e}")
 
-# =============================================================================
-# 2. INFERENCIA INTELIGENTE (Azul)
-# =============================================================================
+
 with tab2:
     st.markdown("<h3 style='color:#3b82f6'>Inferencia de Una Población</h3>", unsafe_allow_html=True)
     st.write("El sistema detecta automáticamente si usar Z o T según los datos ingresados.")
@@ -270,7 +252,7 @@ with tab2:
         c1, c2, c3 = st.columns(3)
         media = c1.number_input("Promedio Muestral ($\\overline{x}$)", step=0.01, format="%.4f")
         n = c2.number_input("Tamaño de Muestra (n)", value=30.0, step=1.0)
-        conf = c3.number_input("Nivel de Confianza ($1-\\alpha$)", value=0.95, min_value=0.0, max_value=1.0, step=0.01, help="Por defecto es 0.95 (95%)")
+        conf = c3.number_input("Nivel de Confianza", value=0.95, min_value=0.0, max_value=1.0, step=0.01, help="Por defecto es 0.95 (95%)")
 
         st.markdown("##### Desviación Estándar (Llena solo una)")
         col_sig, col_s = st.columns(2)
@@ -520,7 +502,7 @@ with tab3:
 # 4. TAMAÑO DE MUESTRA (Verde)
 # =============================================================================
 with tab4:
-    st.markdown("<h3 style='color:#22c55e'>Calculadora de Muestra ($n$)</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#22c55e'>Calculadora de Muestra (n)</h3>", unsafe_allow_html=True)
     
     target = st.radio("Objetivo:", ["Estimar Promedio", "Estimar Proporción"])
     c1, c2 = st.columns(2)
@@ -545,62 +527,3 @@ with tab4:
                 z = stats.norm.ppf((1+conf)/2)
                 n = (z**2 * p_est * (1-p_est)) / (error**2)
                 st.markdown(card("Tamaño de Muestra ($n$)", f"{math.ceil(n)}", "Personas/Datos", "border-green"), unsafe_allow_html=True)
-
-# =============================================================================
-# 5. LABORATORIO VISUAL (TLC)
-# =============================================================================
-with tab5:
-    st.markdown("<h3 style='color:#ffffff'>Laboratorio Visual</h3>", unsafe_allow_html=True)
-    
-    tool = st.selectbox("Seleccione Simulación:", ["Teorema del Límite Central (TLC)", "Comportamiento Error Estándar"])
-    
-    if tool == "Teorema del Límite Central (TLC)":
-        st.info("Simula cómo el promedio de muchas muestras forma una campana, sin importar la población original.")
-        c1, c2 = st.columns(2)
-        n_sim = c1.number_input("Tamaño de cada muestra ($n$)", value=30.0, step=1.0)
-        reps = c2.number_input("Cantidad de muestras (Repeticiones)", value=1000.0, step=1.0)
-        
-        if st.button("Simular"):
-            try:
-                n_sim_int = max(1, int(n_sim))
-                reps_int = max(1, int(reps))
-                pop = np.random.exponential(scale=1.0, size=10000)
-                means = [np.mean(np.random.choice(pop, n_sim_int)) for _ in range(reps_int)]
-                
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-                fig.patch.set_facecolor('#050505')
-                
-                ax1.set_facecolor('#111')
-                ax1.hist(pop, bins=30, color='#444')
-                ax1.set_title("Población Original (Sesgada)", color='white')
-                ax1.axis('off')
-                
-                ax2.set_facecolor('#111')
-                ax2.hist(means, bins=30, color='#22c55e', alpha=0.8)
-                ax2.set_title(f"Distribución de Medias (n={n_sim_int})", color='white')
-                ax2.axis('off')
-                
-                st.pyplot(fig)
-            except Exception as e:
-                st.error(f"Error en la simulación: {e}")
-
-    elif tool == "Comportamiento Error Estándar":
-        sigma_sim = st.number_input("Desviación Poblacional Simulada", value=10.0, step=0.1)
-        
-        if st.button("Generar Curva"):
-            ns = np.arange(1, 200)
-            ees = sigma_sim / np.sqrt(ns)
-            
-            fig, ax = plt.subplots(figsize=(8, 3))
-            fig.patch.set_facecolor('#050505')
-            ax.set_facecolor('#111')
-            ax.plot(ns, ees, color='#3b82f6', lw=3)
-            ax.set_xlabel("Tamaño de Muestra (n)", color='white')
-            ax.set_ylabel("Error Estándar", color='white')
-            ax.grid(color='#333', linestyle='--')
-            ax.tick_params(colors='white')
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['bottom'].set_color('white')
-            ax.spines['left'].set_color('white')
-            st.pyplot(fig)
