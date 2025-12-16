@@ -237,9 +237,7 @@ with tab1:
                                 <em>Análisis de Forma:</em> {sesgo}
                             </div>
                             """, unsafe_allow_html=True)
-
-
-
+                            
 with tab2:
     st.markdown("<h3 style='color:#3b82f6'>Inferencia de Una Población</h3>", unsafe_allow_html=True)
     st.write("El sistema detecta automáticamente si usar Z o T según los datos ingresados.")
