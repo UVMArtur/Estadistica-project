@@ -9,21 +9,19 @@ import re
 # 1. CONFIGURACIÓN DE PÁGINA
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="StatSuite - Calculadora Estadística",
+    page_title="StatSuite Pro",
     page_icon="🧬",
     layout="wide"
 )
 
 # -----------------------------------------------------------------------------
-# 2. ESTILOS CSS (TEMA VISUAL IDENTICO AL PDF)
+# 2. ESTILOS CSS (REPLICANDO EL PDF)
 # -----------------------------------------------------------------------------
-# Este bloque CSS fuerza el modo oscuro de fondo, pero crea tarjetas blancas
-# para los resultados con los bordes de colores (Morado, Azul, Rojo, Verde)
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
-        /* FONDO PRINCIPAL OSCURO (#050505) */
+        [cite_start]/* FONDO PRINCIPAL OSCURO (#050505) [cite: 1] */
         html, body, [class*="css"] {
             font-family: 'Outfit', sans-serif;
             background-color: #050505;
@@ -72,7 +70,7 @@ st.markdown("""
         }
         .stNumberInput input:focus { border-color: #555 !important; }
 
-        /* TARJETAS DE RESULTADOS (Estilo visual clave del PDF) */
+        [cite_start]/* TARJETAS DE RESULTADOS (Estilo visual clave del PDF) [cite: 19, 20] */
         .result-card {
             background-color: #ffffff; /* Fondo blanco */
             color: #1f2937;            /* Texto oscuro */
@@ -106,12 +104,12 @@ st.markdown("""
         }
 
         /* COLORES DE BORDES (Coinciden con las secciones del PDF) */
-        .border-purple { border-color: #a855f7; } /* Descriptiva */
-        .border-blue { border-color: #3b82f6; }   /* Inferencia */
-        .border-red { border-color: #ef4444; }    /* Comparación */
-        .border-green { border-color: #22c55e; }  /* Muestra */
+        .border-purple { border-color: #a855f7; [cite_start]} /* Descriptiva [cite: 13] */
+        .border-blue { border-color: #3b82f6; [cite_start]}   /* Inferencia [cite: 14] */
+        .border-red { border-color: #ef4444; [cite_start]}    /* Comparación [cite: 15] */
+        .border-green { border-color: #22c55e; [cite_start]}  /* Muestra [cite: 16] */
 
-        /* CAJAS DE TEXTO EXPLICATIVO */
+        [cite_start]/* CAJAS DE TEXTO EXPLICATIVO [cite: 32] */
         .simple-text {
             background: rgba(255,255,255,0.05);
             border-left: 4px solid #666;
@@ -122,7 +120,7 @@ st.markdown("""
             font-size: 0.95rem;
         }
 
-        /* BOTONES PERSONALIZADOS */
+        [cite_start]/* BOTONES PERSONALIZADOS [cite: 11] */
         div.stButton > button {
             width: 100%;
             border-radius: 8px;
@@ -141,8 +139,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Título principal
-st.title("🧬 StatSuite Final")
+# Título principal (Modificado según solicitud)
+st.title("🧬 StatSuite Pro")
 
 # Función auxiliar para generar el HTML de las tarjetas
 def card(label, value, sub="", color="border-blue"):
@@ -155,28 +153,28 @@ def card(label, value, sub="", color="border-blue"):
     """
 
 # -----------------------------------------------------------------------------
-# ESTRUCTURA DE PESTAÑAS PRINCIPALES
+# [cite_start]ESTRUCTURA DE PESTAÑAS PRINCIPALES [cite: 12, 13, 14, 15, 16, 17]
 # -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🟣 Estadística Descriptiva", 
-    "🔵 Inferencia Inteligente", 
+    "🔵 Inferencia Estadística", 
     "🔴 Comparación (2 Pob)", 
     "🟢 Tamaño Muestra",
-    "🧪 Laboratorio Visual"
+    "🧪 Visual LAB"
 ])
 
 # =============================================================================
-# [cite_start]PESTAÑA 1: DESCRIPTIVA (Morado) [cite: 1, 2, 3]
+# [cite_start]PESTAÑA 1: DESCRIPTIVA (Morado) [cite: 13]
 # =============================================================================
 with tab1:
-    st.markdown("<h3 style='color:#a855f7'>Análisis de Datos</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#a855f7'>Medidas de Tendencia Central</h3>", unsafe_allow_html=True)
     
     col_in, col_out = st.columns([1, 2], gap="large")
     with col_in:
         st.info("Introduce tus números. Usa PUNTO (.) para decimales. Separa con comas, espacios o saltos de línea.")
-        # Entrada de texto grande como en el PDF
-        input_desc = st.text_area("Datos Numéricos:", height=150, placeholder="Ej: 10.5, 15, 12.0; 18 20")
-        # Botón morado (por contexto de la pestaña)
+        # [cite_start]Entrada de texto grande como en el PDF [cite: 18]
+        input_desc = st.text_area("Datos Numéricos:", height=150, placeholder="Ej: 3.2, 4.5, 7.8")
+        # Botón
         btn_calc_desc = st.button("Analizar Datos", key="btn1")
 
     with col_out:
@@ -189,7 +187,7 @@ with tab1:
                     st.error("Por favor usa PUNTO (.) para decimales. Reemplaza '10,5' por '10.5'.")
                 else:
                     try:
-                        # Procesamiento robusto de texto a números
+                        # [cite_start]Procesamiento robusto de texto a números [cite: 22]
                         parts = re.split(r'[,\;\s]+', input_desc.strip())
                         tokens = [p for p in parts if p != '']
                         nums = []
@@ -210,7 +208,7 @@ with tab1:
                             
                             # Lógica para n < 2
                             if n >= 2:
-                                desv = float(np.std(data, ddof=1))
+                                [cite_start]desv = float(np.std(data, ddof=1)) # Muestral [cite: 25]
                                 var = float(np.var(data, ddof=1))
                             else:
                                 desv = float(np.std(data, ddof=0))
@@ -219,24 +217,24 @@ with tab1:
                             ee = desv / math.sqrt(n) if n > 0 else 0.0
                             rango = float(np.max(data) - np.min(data)) if n > 0 else 0.0
 
-                            # -- Visualización de Tarjetas (Fila 1) --
+                            # -- Visualización de Tarjetas (Replicando PDF Pág 2) --
                             c1, c2, c3 = st.columns(3)
-                            c1.markdown(card("Promedio (Media)", f"{media:.2f}", "", "border-purple"), unsafe_allow_html=True)
-                            c2.markdown(card("Mediana", f"{mediana:.2f}", "", "border-purple"), unsafe_allow_html=True)
-                            c3.markdown(card("Error Estándar", f"{ee:.4f}", "", "border-purple"), unsafe_allow_html=True)
+                            [cite_start]c1.markdown(card("Promedio (Media)", f"{media:.2f}", "", "border-purple"), unsafe_allow_html=True) # [cite: 19]
+                            [cite_start]c2.markdown(card("Mediana", f"{mediana:.2f}", "", "border-purple"), unsafe_allow_html=True) # [cite: 20]
+                            [cite_start]c3.markdown(card("Error Estándar (EE)", f"{ee:.4f}", "", "border-purple"), unsafe_allow_html=True) # [cite: 31]
                             
                             # -- Visualización de Tarjetas (Fila 2) --
                             c4, c5, c6 = st.columns(3)
-                            c4.markdown(card("Desviación Estándar", f"{desv:.2f}", "Muestral" if n>=2 else "Poblacional", "border-purple"), unsafe_allow_html=True)
-                            c5.markdown(card("Varianza", f"{var:.2f}", "", "border-purple"), unsafe_allow_html=True)
+                            [cite_start]c4.markdown(card("Desviación Estándar", f"{desv:.2f}", "Muestral" if n>=2 else "Poblacional", "border-purple"), unsafe_allow_html=True) # [cite: 23]
+                            [cite_start]c5.markdown(card("Varianza", f"{var:.2f}", "", "border-purple"), unsafe_allow_html=True) # [cite: 30]
                             c6.markdown(card("Rango", f"{rango:.2f}", "", "border-purple"), unsafe_allow_html=True)
 
-                            # Interpretación de Sesgo
+                            # [cite_start]Interpretación [cite: 32, 33]
                             sesgo = ""
                             if desv == 0:
-                                sesgo = "Datos idénticos (sin variación)."
+                                sesgo = "Datos idénticos."
                             elif abs(media - mediana) < (desv/10):
-                                sesgo = "Distribución simétrica (Media ≈ Mediana)."
+                                sesgo = "Los datos son bastante simétricos (Media ≈ Mediana)." [cite_start]# [cite: 34]
                             elif media > mediana:
                                 sesgo = "Sesgo positivo (Cola a la derecha)."
                             else:
@@ -245,12 +243,12 @@ with tab1:
                             st.markdown(f"""
                             <div class="simple-text" style="border-left-color: #a855f7;">
                                 <strong>Interpretación:</strong><br>
-                                Con n=<b>{n}</b>, el centro es <b>{media:.2f}</b> y la dispersión es <b>{desv:.2f}</b>.<br>
-                                <em>Forma:</em> {sesgo}
+                                Con n=<b>{n}</b>, el centro se ubica en <b>{media:.2f}</b>. La dispersión (s) es de <b>{desv:.2f}</b>.<br>
+                                {sesgo}
                             </div>
                             """, unsafe_allow_html=True)
 
-                            # Histograma Estilizado Dark
+                            # [cite_start]Histograma Estilizado Dark [cite: 35]
                             st.write("#### Histograma de Frecuencias")
                             fig, ax = plt.subplots(figsize=(10, 3))
                             fig.patch.set_facecolor('#050505')
@@ -258,33 +256,34 @@ with tab1:
                             counts, bins, patches = ax.hist(data, bins='auto', color='#a855f7', edgecolor='black', alpha=0.9)
                             ax.axvline(media, color='white', linestyle='--', label='Promedio')
                             ax.legend(facecolor='#222', labelcolor='white', frameon=False)
-                            ax.axis('off') # Ocultar ejes para estilo minimalista
+                            ax.axis('off') 
                             st.pyplot(fig)
                             
                     except Exception as e:
                         st.error(f"Error: {e}")
 
 # =============================================================================
-# [cite_start]PESTAÑA 2: INFERENCIA INTELIGENTE (Azul) [cite: 51, 68, 81]
+# [cite_start]PESTAÑA 2: INFERENCIA INTELIGENTE (Azul) [cite: 14]
 # =============================================================================
 with tab2:
     st.markdown("<h3 style='color:#3b82f6'>Inferencia de Una Población</h3>", unsafe_allow_html=True)
     
-    # Sub-navegación interna
+    # [cite_start]Sub-navegación interna [cite: 52]
     tipo_dato = st.radio("¿Qué tipo de dato tienes?", ["Promedio (Media)", "Porcentaje (Proporción)", "Posición Individual (Z)"], horizontal=True)
     st.markdown("---")
 
-    # CASO 1: MEDIA
+    # [cite_start]CASO 1: MEDIA [cite: 53]
     if tipo_dato == "Promedio (Media)":
         c1, c2, c3 = st.columns(3)
         media = c1.number_input("Promedio Muestral (x̄)", step=0.01, format="%.4f")
         n = c2.number_input("Tamaño de Muestra (n)", value=30.0, step=1.0)
-        conf = c3.number_input("Nivel de Confianza (0.90 - 0.99)", value=0.95, step=0.01)
+        conf = c3.number_input("Nivel de Confianza (90-99%)", value=95.0, step=0.1) / 100.0
 
         col_sig, col_s = st.columns(2)
         sigma = col_sig.number_input("Poblacional (σ) -> Usa Z", step=0.01, format="%.4f", help="Si conoces la historia poblacional")
         s = col_s.number_input("Muestral (s) -> Usa T (o Z aprox)", step=0.01, format="%.4f", help="Calculado de estos datos")
 
+        # [cite_start]Checkbox para prueba de hipótesis [cite: 68]
         realizar_prueba = st.checkbox("Calcular prueba de hipótesis (H0)", value=False)
         mu_hyp = 0.0
         if realizar_prueba:
@@ -304,14 +303,14 @@ with tab2:
                     se = sigma / math.sqrt(n_int)
                     z_val = stats.norm.ppf((1 + conf)/2)
                     margen = z_val * se
-                    dist_label = "Normal (Z) - Sigma Conocida"
+                    [cite_start]dist_label = "Normal (Z) - Sigma Conocida" # [cite: 139]
                     test_func = stats.norm
                 elif s > 0:
                     se = s / math.sqrt(n_int)
                     if n_int >= 30:
                         z_val = stats.norm.ppf((1 + conf)/2)
                         margen = z_val * se
-                        dist_label = "Normal (Z) - Muestra Grande"
+                        [cite_start]dist_label = "Normal (Z) - Muestra Grande" # [cite: 102]
                         test_func = stats.norm
                     else:
                         t_val = stats.t.ppf((1 + conf)/2, df=n_int-1)
@@ -322,16 +321,21 @@ with tab2:
                     st.error("Ingresa alguna desviación (σ o s).")
                     st.stop()
 
-                # Resultados Intervalo
+                # [cite_start]Resultados Intervalo (Tarjetas azules) [cite: 99, 103]
                 c_res1, c_res2 = st.columns(2)
                 c_res1.markdown(card("Límite Inferior", f"{media - margen:.4f}", "", "border-blue"), unsafe_allow_html=True)
                 c_res2.markdown(card("Límite Superior", f"{media + margen:.4f}", "", "border-blue"), unsafe_allow_html=True)
                 
-                st.markdown(f"<div class='simple-text' style='border-left-color:#3b82f6'>Confianza: {conf*100:.1f}%<br>Método: {dist_label}</div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class='simple-text' style='border-left-color:#3b82f6'>
+                <strong>Interpretación del Intervalo:</strong><br>
+                Con un {conf*100:.1f}% de confianza, el verdadero promedio poblacional está entre <b>{media - margen:.4f}</b> y <b>{media + margen:.4f}</b>.<br>
+                Método usado: {dist_label}. Error Estándar: {se:.4f}.
+                [cite_start]</div>""", unsafe_allow_html=True) # [cite: 100, 101, 102]
 
-                # Resultados Hipótesis
+                # [cite_start]Resultados Hipótesis [cite: 174]
                 if realizar_prueba:
-                    st.markdown("#### Prueba de Hipótesis")
+                    st.markdown("#### Resultado de Prueba de Hipótesis")
                     test_stat = (media - mu_hyp) / se
                     if dist_label.startswith("T-Student"):
                         p_val = 2 * (1 - test_func.cdf(abs(test_stat), df=n_int-1))
@@ -339,68 +343,83 @@ with tab2:
                         p_val = 2 * (1 - test_func.cdf(abs(test_stat)))
                         
                     alpha = 1 - conf
-                    sig = "Diferencia Significativa (Rechazar H0)" if p_val < alpha else "No Significativa"
+                    [cite_start]sig = "Rechazar H0 (Diferencia Significativa)" if p_val < alpha else "No Rechazar H0" # [cite: 178]
                     col_h = "border-red" if p_val < alpha else "border-green"
                     
                     h1, h2 = st.columns(2)
-                    h1.markdown(card("Estadístico", f"{test_stat:.4f}", "", "border-blue"), unsafe_allow_html=True)
-                    h2.markdown(card("Valor P", f"{p_val:.4f}", sig, col_h), unsafe_allow_html=True)
+                    [cite_start]h1.markdown(card("Estadístico de Prueba", f"{test_stat:.4f}", "", "border-blue"), unsafe_allow_html=True) # [cite: 176]
+                    [cite_start]h2.markdown(card("Valor P (P-Value)", f"{p_val:.4f}", sig, col_h), unsafe_allow_html=True) # [cite: 179]
 
             except Exception as e:
                 st.error(f"Error en cálculo: {e}")
 
-    # CASO 2: PROPORCIÓN
+    # [cite_start]CASO 2: PROPORCIÓN [cite: 193]
     elif tipo_dato == "Porcentaje (Proporción)":
         c1, c2, c3 = st.columns(3)
         prop = c1.number_input("Proporción (p) [0.0 - 1.0]", value=0.5, step=0.01)
         n = c2.number_input("Muestra (n)", value=100.0, step=1.0)
-        conf = c3.number_input("Confianza", value=0.95, step=0.01)
+        conf = c3.number_input("Nivel de Confianza %", value=95.0, step=0.1) / 100.0
         
-        if st.button("Calcular Intervalo Prop"):
+        # [cite_start]Hipótesis para proporción [cite: 200]
+        realizar_prueba_p = st.checkbox("Calcular prueba de hipótesis (H0)", value=False)
+        p_hyp = 0.5
+        if realizar_prueba_p:
+            p_hyp = st.number_input("Proporción Hipotética (p0)", value=0.5, step=0.01)
+
+        if st.button("Calcular Intervalo"):
             n_int = int(n)
             se = math.sqrt((prop * (1-prop)) / n_int)
             z = stats.norm.ppf((1+conf)/2)
             margen = z * se
             
+            # [cite_start]Tarjetas de resultado (Pág 8 PDF) [cite: 227, 233]
             c1, c2 = st.columns(2)
-            c1.markdown(card("Límite Inf %", f"{(prop-margen)*100:.2f}%", f"{max(0, prop-margen):.4f}", "border-blue"), unsafe_allow_html=True)
-            c2.markdown(card("Límite Sup %", f"{(prop+margen)*100:.2f}%", f"{min(1, prop+margen):.4f}", "border-blue"), unsafe_allow_html=True)
+            c1.markdown(card("Límite Inferior", f"{(prop-margen)*100:.2f}%", f"{max(0, prop-margen):.4f}", "border-blue"), unsafe_allow_html=True)
+            c2.markdown(card("Límite Superior", f"{(prop+margen)*100:.2f}%", f"{min(1, prop+margen):.4f}", "border-blue"), unsafe_allow_html=True)
 
-    # CASO 3: PUNTUACIÓN Z
+            if realizar_prueba_p:
+                 se_hyp = math.sqrt((p_hyp * (1-p_hyp)) / n_int)
+                 z_stat = (prop - p_hyp) / se_hyp
+                 p_val = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+                 sig_txt = "Significativa" if p_val < (1-conf) else "No significativa"
+                 [cite_start]st.markdown(f"<div class='simple-text'>Prueba de Hipótesis: Valor P = {p_val:.4f} ({sig_txt})</div>", unsafe_allow_html=True) # [cite: 262]
+
+    # [cite_start]CASO 3: PUNTUACIÓN Z [cite: 296]
     elif tipo_dato == "Posición Individual (Z)":
         c1, c2, c3 = st.columns(3)
-        val = c1.number_input("Valor (x)", 0.0)
-        mu = c2.number_input("Media (μ)", 0.0)
-        sig = c3.number_input("Desviación (σ)", 1.0)
+        [cite_start]val = c1.number_input("Valor a Evaluar (x)", 0.0) # [cite: 299]
+        [cite_start]mu = c2.number_input("Promedio Población (μ)", 0.0) # [cite: 301]
+        [cite_start]sig = c3.number_input("Desviación Población (σ)", 1.0) # [cite: 302]
         if st.button("Calcular Z"):
             z = (val - mu) / sig
-            st.markdown(card("Puntaje Z", f"{z:.4f}", "Desviaciones estándar", "border-blue"), unsafe_allow_html=True)
+            [cite_start]st.markdown(card("Puntaje Z", f"{z:.4f}", "Desviaciones estándar", "border-blue"), unsafe_allow_html=True) # [cite: 305]
 
 # =============================================================================
-# [cite_start]PESTAÑA 3: COMPARACIÓN (Rojo) [cite: 142, 175]
+# [cite_start]PESTAÑA 3: COMPARACIÓN (Rojo) [cite: 15]
 # =============================================================================
 with tab3:
-    st.markdown("<h3 style='color:#ef4444'>Comparación de Dos Grupos</h3>", unsafe_allow_html=True)
-    opcion = st.selectbox("Tipo de Análisis:", ["Diferencia de Medias", "Diferencia de Proporciones"])
+    st.markdown("<h3 style='color:#ef4444'>Comparación de Dos Poblaciones</h3>", unsafe_allow_html=True)
+    [cite_start]opcion = st.selectbox("Seleccione Análisis:", ["Diferencia de Medias", "Diferencia de Proporciones"]) # [cite: 316]
     st.markdown("---")
     
     col_a, col_b = st.columns(2)
     
-    if opcion == "Diferencia de Medias":
+    [cite_start]if opcion == "Diferencia de Medias": # [cite: 317]
         with col_a:
-            st.write("🅰️ **Grupo 1**")
-            m1 = st.number_input("Media 1", step=0.1)
-            s1 = st.number_input("Desviación 1", step=0.1, value=1.0)
-            n1 = st.number_input("Tamaño 1", value=30.0)
+            [cite_start]st.write("🅰️ **Grupo 1**") # [cite: 319]
+            [cite_start]m1 = st.number_input("Media 1 (x̄1)", step=0.1) # [cite: 320]
+            [cite_start]s1 = st.number_input("Desviación 1 (s1)", step=0.1, value=1.0) # [cite: 321]
+            [cite_start]n1 = st.number_input("Tamaño 1 (n1)", value=30.0) # [cite: 322]
         with col_b:
-            st.write("🅱️ **Grupo 2**")
-            m2 = st.number_input("Media 2", step=0.1)
-            s2 = st.number_input("Desviación 2", step=0.1, value=1.0)
-            n2 = st.number_input("Tamaño 2", value=30.0)
+            [cite_start]st.write("🅱️ **Grupo 2**") # [cite: 324]
+            m2 = st.number_input("Media 2 (x̄2)", step=0.1)
+            s2 = st.number_input("Desviación 2 (s2)", step=0.1, value=1.0)
+            n2 = st.number_input("Tamaño 2 (n2)", value=30.0)
             
         alpha = st.number_input("Significancia (α)", value=0.05)
 
         if st.button("Comparar Grupos"):
+            # Error estándar aproximado (Welch/Unpooled generalmente es mejor, pero aquí usamos simplificado)
             se = math.sqrt((s1**2/n1) + (s2**2/n2))
             t_stat = (m1 - m2) / se
             df = n1 + n2 - 2
@@ -436,7 +455,7 @@ with tab3:
             k2.markdown(card("Valor P", f"{p_val:.4f}", res_txt, color), unsafe_allow_html=True)
 
 # =============================================================================
-# [cite_start]PESTAÑA 4: TAMAÑO MUESTRA (Verde) [cite: 45]
+# [cite_start]PESTAÑA 4: TAMAÑO MUESTRA (Verde) [cite: 16]
 # =============================================================================
 with tab4:
     st.markdown("<h3 style='color:#22c55e'>Calculadora de Muestra (n)</h3>", unsafe_allow_html=True)
@@ -444,7 +463,7 @@ with tab4:
     
     col1, col2 = st.columns(2)
     error = col1.number_input("Margen de Error (E)", value=0.05, format="%.4f")
-    conf = col2.number_input("Confianza (1-α)", value=0.95)
+    conf = col2.number_input("Confianza (1-α) [0-1]", value=0.95)
     
     if target == "Estimar Promedio":
         sigma = st.number_input("Desviación Estimada (σ)", value=10.0)
@@ -460,7 +479,7 @@ with tab4:
             st.markdown(card("Muestra Necesaria", f"{math.ceil(n_res)}", "Encuestados", "border-green"), unsafe_allow_html=True)
 
 # =============================================================================
-# PESTAÑA 5: LABORATORIO VISUAL (TLC)
+# [cite_start]PESTAÑA 5: VISUAL LAB (TLC) [cite: 17]
 # =============================================================================
 with tab5:
     st.markdown("<h3 style='color:#ffffff'>Laboratorio Visual</h3>", unsafe_allow_html=True)
