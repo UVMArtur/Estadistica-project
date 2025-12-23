@@ -135,24 +135,30 @@ with tabs[0]:
         val_min = np.min(arr)
         val_max = np.max(arr)
 
+        # Construcción de intervalos sin solape (enteros)
+        # Ancho entero (ceil), límites mostrados como enteros cerrados [LI, LS]
         if val_min == val_max:
             width = 1
-            bin_edges = [val_min - 0.5, val_max + 0.5]
+            display_edges = [math.floor(val_min), math.floor(val_min) + width]
         else:
-            rango_val = val_max - val_min
-            width = rango_val / k
-            bin_edges = [val_min + i * width for i in range(k + 1)]
-            # asegurar que el último cubra el máximo
-            bin_edges[-1] = val_max + 1e-9
+            val_min_int = math.floor(val_min)
+            val_max_int = math.ceil(val_max)
+            rango_int = val_max_int - val_min_int
+            width = math.ceil(rango_int / k)  # amplitud (entera)
+            display_edges = [val_min_int + i * width for i in range(k + 1)]
+            # Forzar que el último cubra el máximo redondeado
+            display_edges[-1] = val_max_int
 
-        counts, bin_edges = np.histogram(arr, bins=bin_edges)
+        # Bordes continuos para histogram (para contar sin solape): [-0.5, +0.5] alrededor de enteros
+        bin_edges = [display_edges[0] - 0.5] + [edge + 0.5 for edge in display_edges[1:]]
 
-        # Tabla con número de grupo 1..k
+        counts, _ = np.histogram(arr, bins=bin_edges)
+
         grupos = np.arange(1, k + 1)
         tabla_freq = pd.DataFrame({
             'Grupo': grupos,
-            'Límite Inferior': bin_edges[:-1],
-            'Límite Superior': bin_edges[1:],
+            'Límite Inferior': display_edges[:-1],
+            'Límite Superior': display_edges[1:],
             'Frecuencia Absoluta (fi)': counts
         })
         tabla_freq['Marca de Clase (xi)'] = (tabla_freq['Límite Inferior'] + tabla_freq['Límite Superior']) / 2
@@ -162,7 +168,6 @@ with tabs[0]:
         col_hist, col_tabla = st.columns([2, 1])
 
         with col_hist:
-            # Usar grupo como eje X (1, 2, 3,...)
             fig = px.bar(
                 tabla_freq,
                 x='Grupo',
@@ -184,9 +189,9 @@ with tabs[0]:
         with col_tabla:
             st.markdown("#### Tabla de Frecuencias")
             st.dataframe(tabla_freq.style.format({
-                'Límite Inferior': '{:.4f}',
-                'Límite Superior': '{:.4f}',
-                'Marca de Clase (xi)': '{:.4f}',
+                'Límite Inferior': '{:.0f}',
+                'Límite Superior': '{:.0f}',
+                'Marca de Clase (xi)': '{:.2f}',
                 'Frecuencia Relativa (hi)': '{:.4f}'
             }), height=400)
-            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width:.4f}")
+            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
