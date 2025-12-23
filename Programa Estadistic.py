@@ -7,6 +7,7 @@ from scipy import stats
 
 st.set_page_config(page_title="Calculadora de Estadística", layout="wide", page_icon="📊")
 
+# Estilos CSS
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: white; }
@@ -17,12 +18,18 @@ st.markdown("""
         border: none; font-weight: bold;
     }
     .stButton>button:hover { background-color: #7C4DFF; }
+    /* Tarjetas blancas */
     div[data-testid="metric-container"] {
-        background-color: white; color: black; border-radius: 10px; padding: 10px;
+        background-color: white !important; color: black !important;
+        border-radius: 10px; padding: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; border: 2px solid #6200EA;
     }
-    div[data-testid="metric-container"] label { color: #555 !important; font-size: 0.9rem; }
-    div[data-testid="metric-container"] div[data-testid="stMetricValue"] { color: black !important; font-weight: bold; }
+    div[data-testid="metric-container"] label {
+        color: black !important; font-size: 0.9rem;
+    }
+    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+        color: black !important; font-weight: bold;
+    }
     .stTabs [data-baseweb="tab-list"] { gap: 20px; justify-content: center; }
     .stTabs [data-baseweb="tab"] { color: white; }
     .stTabs [aria-selected="true"] { background-color: rgba(98, 0, 234, 0.2); border-bottom: 2px solid #6200EA; }
@@ -33,6 +40,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Encabezado
 st.title("Calculadora de estadística")
 st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
@@ -71,9 +79,9 @@ with tabs[0]:
         arr = np.array(data_list)
         n = len(arr)
 
+        # Medidas
         media = np.mean(arr)
         mediana = np.median(arr)
-
         vals, counts = np.unique(arr, return_counts=True)
         max_count = np.max(counts)
         if max_count == 1:
@@ -119,23 +127,28 @@ with tabs[0]:
         st.markdown("---")
         st.markdown("### Histograma de Frecuencias y Regla de Sturges")
 
+        # Regla de Sturges
         if n > 1:
-            k = 1 + 3.322 * math.log10(n)
-            num_clases = max(math.ceil(k), 1)
+            k = math.ceil(1 + 3.322 * math.log10(n))
         else:
-            num_clases = 1
+            k = 1
 
         val_min = np.min(arr)
         val_max = np.max(arr)
 
         if val_min == val_max:
-            bins = [val_min - 0.5, val_max + 0.5]
-            ancho_clase = 1
+            # todos iguales
+            width = 1
+            bin_edges = [val_min - 0.5, val_max + 0.5]
         else:
-            bins = np.linspace(val_min, val_max, num_clases + 1)
-            ancho_clase = (val_max - val_min) / num_clases
+            rango_val = val_max - val_min
+            width = rango_val / k
+            # construir bordes: min, min+width, ..., min+k*width
+            bin_edges = [val_min + i * width for i in range(k + 1)]
+            # asegurar que incluimos el máximo
+            bin_edges[-1] = val_max + 1e-9
 
-        counts, bin_edges = np.histogram(arr, bins=bins)
+        counts, bin_edges = np.histogram(arr, bins=bin_edges)
 
         tabla_freq = pd.DataFrame({
             'Límite Inferior': bin_edges[:-1],
@@ -153,7 +166,7 @@ with tabs[0]:
                 tabla_freq,
                 x='Marca de Clase (xi)',
                 y='Frecuencia Absoluta (fi)',
-                title=f"Histograma (Regla de Sturges: k={num_clases})",
+                title=f"Histograma (k={k}, ancho={width:.4f})",
                 text='Frecuencia Absoluta (fi)',
             )
             fig.update_traces(marker_color='#7C4DFF', textposition='outside')
@@ -171,9 +184,9 @@ with tabs[0]:
         with col_tabla:
             st.markdown("#### Tabla de Frecuencias")
             st.dataframe(tabla_freq.style.format({
-                'Límite Inferior': '{:.2f}',
-                'Límite Superior': '{:.2f}',
-                'Marca de Clase (xi)': '{:.2f}',
+                'Límite Inferior': '{:.4f}',
+                'Límite Superior': '{:.4f}',
+                'Marca de Clase (xi)': '{:.4f}',
                 'Frecuencia Relativa (hi)': '{:.4f}'
             }), height=400)
-            st.info(f"**N:** {n} | **Grupos (k):** {num_clases} | **Ancho:** {ancho_clase:.4f}")
+            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width:.4f}")
