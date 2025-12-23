@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
 import math
 from scipy import stats
 
@@ -64,7 +63,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* Tabs personalizados (intentando imitar la barra de navegación) */
+    /* Tabs personalizados */
     .stTabs [data-baseweb="tab-list"] {
         gap: 20px;
         justify-content: center;
@@ -94,8 +93,7 @@ st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 # --- Navegación (Tabs) ---
 tabs = st.tabs(["Medidas de tendencia central", "Inferencia estadística", "Comparación de poblaciones", "Tamaño de muestra", "Visual LAB"])
 
-with tabs[0]: # Trabajaremos principalmente en la primera pestaña según tu imagen
-    
+with tabs[0]: 
     col_izq, col_der = st.columns([1, 2])
     
     with col_izq:
@@ -118,7 +116,6 @@ with tabs[0]: # Trabajaremos principalmente en la primera pestaña según tu ima
     if calcular and input_data:
         try:
             # 1. Procesamiento de datos
-            # Reemplazar comas por espacios para facilitar el split, o manejar ambos
             raw_text = input_data.replace(',', ' ').replace(';', ' ').replace('\n', ' ')
             data_list = [float(x) for x in raw_text.split() if x.strip()]
             
@@ -133,44 +130,32 @@ with tabs[0]: # Trabajaremos principalmente en la primera pestaña según tu ima
                 media = np.mean(arr)
                 mediana = np.median(arr)
                 
-                # Moda (puede haber múltiples o ninguna)
-                mode_result = stats.mode(arr, keepdims=True)
-                # Si todos los valores son únicos, scipy a veces devuelve el más bajo. 
-                # Verificamos si realmente hay moda contando frecuencias.
+                # Moda
                 vals, counts = np.unique(arr, return_counts=True)
                 max_count = np.max(counts)
                 
                 if max_count == 1:
                     moda_str = "No hay moda"
-                    moda_subtext = "(Todos los valores son únicos)"
+                    moda_subtext = "(Todos únicos)"
                 else:
                     modas = vals[counts == max_count]
                     moda_str = ", ".join(map(str, modas))
-                    moda_subtext = f"(Se repite {max_count} veces)"
+                    moda_subtext = f"(Repite {max_count})"
 
-                rango = np.ptp(arr) # Peak to peak (max - min)
-                
-                # Grados de libertad para varianza/std: Muestra (ddof=1), Población (ddof=0)
+                rango = np.ptp(arr) 
                 ddof = 1 if tipo_datos == "Muestra" else 0
-                
                 varianza = np.var(arr, ddof=ddof)
                 desviacion_std = np.std(arr, ddof=ddof)
                 
-                # Error estándar (solo suele aplicar conceptualmente a muestras para inferir medias, pero lo calculamos)
-                error_estandar = stats.sem(arr, ddof=ddof) if n > 1 else 0
-
-                # 3. Mostrar Tarjetas de Resultados (estilo visual de la imagen)
+                # 3. Mostrar Tarjetas de Resultados
                 with col_der:
-                    st.markdown("<br>", unsafe_allow_html=True) # Espacio
+                    st.markdown("<br>", unsafe_allow_html=True)
                     
                     # Fila 1
                     c1, c2, c3 = st.columns(3)
-                    with c1:
-                        st.metric(label="Promedio (media)", value=f"{media:.2f}")
-                    with c2:
-                        st.metric(label="Mediana", value=f"{mediana:.2f}")
-                    with c3:
-                        st.metric(label="Moda", value=moda_str, delta=moda_subtext, delta_color="off")
+                    with c1: st.metric(label="Promedio (media)", value=f"{media:.2f}")
+                    with c2: st.metric(label="Mediana", value=f"{mediana:.2f}")
+                    with c3: st.metric(label="Moda", value=moda_str, delta=moda_subtext, delta_color="off")
 
                     st.markdown("<br>", unsafe_allow_html=True)
                     
@@ -185,89 +170,78 @@ with tabs[0]: # Trabajaremos principalmente en la primera pestaña según tu ima
                     with c6:
                         st.metric(label="Rango", value=f"{rango:.2f}")
 
-                    # Interpretación simple (caja blanca de texto)
+                    # Interpretación
                     interpretation_html = f"""
                     <div style="background-color: white; color: black; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 5px solid #6200EA;">
                         <strong>Interpretación:</strong><br>
                         Con una {tipo_datos.lower()} de <strong>{n}</strong> datos, el centro se ubica en <strong>{media:.2f}</strong>. 
                         La dispersión es de <strong>{desviacion_std:.2f}</strong>.
-                        {'Los datos son simétricos' if abs(media - mediana) < 0.1 * desviacion_std else 'Los datos presentan asimetría'}.
                     </div>
                     """
                     st.markdown(interpretation_html, unsafe_allow_html=True)
 
-    # --- Sección inferior: Histograma y Frecuencias (Ancho completo) ---
-    if calcular and input_data and len(data_list) > 0:
-        st.markdown("---")
-        st.markdown("### Histograma de Frecuencias y Regla de Sturges")
-        
-        # Calcular Regla de Sturges
-        # k = 1 + 3.322 * log10(n)
-        k = 1 + 3.322 * math.log10(n)
-        num_clases = math.ceil(k) # Redondear hacia arriba para número de intervalos
-        
-        val_min = np.min(arr)
-        val_max = np.max(arr)
-        ancho_clase = (val_max - val_min) / num_clases
-        
-        # Ajuste pequeño para asegurar que el último valor entre
-        bins = np.linspace(val_min, val_max, num_clases + 1)
-        
-        # Crear tabla de frecuencias
-        counts, bin_edges = np.histogram(arr, bins=bins)
-        
-        tabla_freq = pd.DataFrame({
-            'Límite Inferior': bin_edges[:-1],
-            'Límite Superior': bin_edges[1:],
-            'Frecuencia Absoluta (fi)': counts
-        })
-        tabla_freq['Marca de Clase (xi)'] = (tabla_freq['Límite Inferior'] + tabla_freq['Límite Superior']) / 2
-        tabla_freq['Frecuencia Relativa (hi)'] = tabla_freq['Frecuencia Absoluta (fi)'] / n
-        tabla_freq['Frecuencia Acumulada (Fi)'] = tabla_freq['Frecuencia Absoluta (fi)'].cumsum()
+                # --- Sección inferior: Histograma y Frecuencias ---
+                st.markdown("---")
+                st.markdown("### Histograma de Frecuencias y Regla de Sturges")
+                
+                # Regla de Sturges
+                k = 1 + 3.322 * math.log10(n)
+                num_clases = math.ceil(k)
+                if num_clases < 1: num_clases = 1 # Evitar errores con 1 solo dato
+                
+                val_min = np.min(arr)
+                val_max = np.max(arr)
+                
+                # Calcular bins manualmente para tener control total
+                if val_min == val_max:
+                   # Caso especial: todos los datos son iguales
+                   bins = np.array([val_min - 0.5, val_max + 0.5])
+                   ancho_clase = 1
+                else:
+                   ancho_clase = (val_max - val_min) / num_clases
+                   bins = np.linspace(val_min, val_max, num_clases + 1)
+                
+                counts, bin_edges = np.histogram(arr, bins=bins)
+                
+                tabla_freq = pd.DataFrame({
+                    'Límite Inferior': bin_edges[:-1],
+                    'Límite Superior': bin_edges[1:],
+                    'Frecuencia Absoluta (fi)': counts
+                })
+                tabla_freq['Marca de Clase (xi)'] = (tabla_freq['Límite Inferior'] + tabla_freq['Límite Superior']) / 2
+                tabla_freq['Frecuencia Relativa (hi)'] = tabla_freq['Frecuencia Absoluta (fi)'] / n
+                
+                col_hist, col_tabla = st.columns([2, 1])
 
-        col_hist, col_tabla = st.columns([2, 1])
+                with col_hist:
+                    fig = px.bar(
+                        tabla_freq, 
+                        x='Marca de Clase (xi)', 
+                        y='Frecuencia Absoluta (fi)',
+                        title=f"Histograma (Regla de Sturges: k={num_clases})",
+                        text='Frecuencia Absoluta (fi)',
+                    )
+                    fig.update_traces(marker_color='#7C4DFF', textposition='outside')
+                    fig.update_layout(
+                        plot_bgcolor='black', paper_bgcolor='black',
+                        font=dict(color='white'),
+                        xaxis=dict(title='Grupos / Clases', showgrid=False),
+                        yaxis=dict(title='Frecuencia', showgrid=True, gridcolor='#333'),
+                        bargap=0.05
+                    )
+                    fig.add_vline(x=media, line_width=2, line_dash="dash", line_color="white", annotation_text="Promedio")
+                    st.plotly_chart(fig, use_container_width=True)
 
-        with col_hist:
-            # Crear Histograma con Plotly
-            fig = px.bar(
-                tabla_freq, 
-                x='Marca de Clase (xi)', 
-                y='Frecuencia Absoluta (fi)',
-                title=f"Histograma (Regla de Sturges: k={num_clases})",
-                text='Frecuencia Absoluta (fi)', # Mostrar número encima de la barra
-            )
-            
-            # Personalizar diseño para que parezca al de la imagen
-            fig.update_traces(marker_color='#7C4DFF', textposition='outside')
-            fig.update_layout(
-                plot_bgcolor='black',
-                paper_bgcolor='black',
-                font=dict(color='white'),
-                xaxis=dict(title='Grupos / Clases', showgrid=False),
-                yaxis=dict(title='Frecuencia', showgrid=True, gridcolor='#333'),
-                bargap=0.05 # Barras casi pegadas
-            )
-            
-            # Añadir línea de promedio
-            fig.add_vline(x=media, line_width=2, line_dash="dash", line_color="white", annotation_text="Promedio", annotation_position="top right")
-            
-            st.plotly_chart(fig, use_container_width=True)
-
-        with col_tabla:
-            st.markdown("#### Tabla de Frecuencias")
-            st.dataframe(tabla_freq.style.format({
-                'Límite Inferior': '{:.2f}',
-                'Límite Superior': '{:.2f}',
-                'Marca de Clase (xi)': '{:.2f}',
-                'Frecuencia Relativa (hi)': '{:.4f}'
-            }), height=400)
-            
-            st.info(f"""
-            **Detalles del cálculo:**
-            - **N (Datos):** {n}
-            - **K (Sturges):** {num_clases} grupos
-            - **Ancho calculado:** {ancho_clase:.4f}
-            """)
+                with col_tabla:
+                    st.markdown("#### Tabla de Frecuencias")
+                    st.dataframe(tabla_freq.style.format({
+                        'Límite Inferior': '{:.2f}', 'Límite Superior': '{:.2f}',
+                        'Marca de Clase (xi)': '{:.2f}', 'Frecuencia Relativa (hi)': '{:.4f}'
+                    }), height=400)
+                    
+                    st.info(f"**N:** {n} | **K (Sturges):** {num_clases} | **Ancho:** {ancho_clase:.4f}")
 
         except ValueError:
             st.error("Error al procesar los datos. Asegúrate de ingresar solo números separados correctamente.")
+        except Exception as e:
+            st.error(f"Ocurrió un error inesperado: {e}")
