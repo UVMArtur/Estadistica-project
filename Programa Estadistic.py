@@ -40,7 +40,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Encabezado
 st.title("Calculadora de estadística")
 st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
@@ -137,20 +136,21 @@ with tabs[0]:
         val_max = np.max(arr)
 
         if val_min == val_max:
-            # todos iguales
             width = 1
             bin_edges = [val_min - 0.5, val_max + 0.5]
         else:
             rango_val = val_max - val_min
             width = rango_val / k
-            # construir bordes: min, min+width, ..., min+k*width
             bin_edges = [val_min + i * width for i in range(k + 1)]
-            # asegurar que incluimos el máximo
+            # asegurar que el último cubra el máximo
             bin_edges[-1] = val_max + 1e-9
 
         counts, bin_edges = np.histogram(arr, bins=bin_edges)
 
+        # Tabla con número de grupo 1..k
+        grupos = np.arange(1, k + 1)
         tabla_freq = pd.DataFrame({
+            'Grupo': grupos,
             'Límite Inferior': bin_edges[:-1],
             'Límite Superior': bin_edges[1:],
             'Frecuencia Absoluta (fi)': counts
@@ -162,9 +162,10 @@ with tabs[0]:
         col_hist, col_tabla = st.columns([2, 1])
 
         with col_hist:
+            # Usar grupo como eje X (1, 2, 3,...)
             fig = px.bar(
                 tabla_freq,
-                x='Marca de Clase (xi)',
+                x='Grupo',
                 y='Frecuencia Absoluta (fi)',
                 title=f"Histograma (k={k}, ancho={width:.4f})",
                 text='Frecuencia Absoluta (fi)',
@@ -174,11 +175,10 @@ with tabs[0]:
                 plot_bgcolor='black',
                 paper_bgcolor='black',
                 font=dict(color='white'),
-                xaxis=dict(title='Grupos / Clases', showgrid=False),
+                xaxis=dict(title='Grupo', tickmode='linear'),
                 yaxis=dict(title='Frecuencia', showgrid=True, gridcolor='#333'),
                 bargap=0.05
             )
-            fig.add_vline(x=media, line_width=2, line_dash="dash", line_color="white", annotation_text="Promedio")
             st.plotly_chart(fig, use_container_width=True)
 
         with col_tabla:
