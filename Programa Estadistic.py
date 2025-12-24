@@ -479,7 +479,6 @@ with tabs[2]:
                 me = crit * se
                 lower = diff - me
                 upper = diff + me
-                # p-value bilateral contra H₀: diff=0
                 if se > 0:
                     z_stat = diff / se
                     p_val = 2 * (1 - stats.norm.cdf(abs(z_stat)))
@@ -509,7 +508,7 @@ with tabs[2]:
                     f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
                     f"border:2px solid #7C4DFF;font-weight:700;margin-top:12px;'>"
                     f"Prueba de hipótesis (H₀: μ₁ − μ₂ = 0): Z = {z_stat:.4f}, p = {p_val:.4f}. "
-                    f\"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}.\"
+                    f"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}."
                     f"</div>", unsafe_allow_html=True)
 
         else:  # Diferencia de Proporciones
@@ -563,5 +562,5 @@ with tabs[2]:
                     f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
                     f"border:2px solid #7C4DFF;font-weight:700;margin-top:12px;'>"
                     f"Prueba de hipótesis (H₀: p₁ − p₂ = 0): Z = {z_stat:.4f}, p = {p_val:.4f}. "
-                    f\"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}.\"
+                    f"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}."
                     f"</div>", unsafe_allow_html=True)
