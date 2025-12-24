@@ -13,45 +13,20 @@ st.markdown("""
 <style>
     .stApp { background-color: #000000; color: white; }
     h1, h2, h3 { color: white !important; text-align: center; font-family: 'Arial', sans-serif; }
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] { gap: 20px; justify-content: center; }
     .stTabs [data-baseweb="tab"] { color: white; }
     .stTabs [aria-selected="true"] { background-color: rgba(124, 77, 255, 0.28); border-bottom: 3px solid #7C4DFF; }
-    /* Gradiente superior */
     .gradient-line { height: 8px; background: linear-gradient(90deg, #7C4DFF 0%, #00B0FF 100%); border-radius: 4px; margin-bottom: 20px; }
-    /* Inputs */
-    .stTextArea textarea, input[type=text] {
-        background-color: #111111; color: white; border: 1px solid #7C4DFF;
-    }
-    /* Botones morados */
-    .stButton>button {
-        background-color: #7C4DFF; color: white; border-radius: 12px; width: 100%;
-        border: none; font-weight: bold; padding: 14px 0;
-    }
+    .stTextArea textarea, input[type=text] { background-color: #111111; color: white; border: 1px solid #7C4DFF; }
+    .stButton>button { background-color: #7C4DFF; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }
     .stButton>button:hover { background-color: #9b6bff; }
-    /* Tarjetas */
-    div[data-testid="metric-container"] {
-        background-color: white !important; color: black !important;
-        border-radius: 14px; padding: 14px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.15); text-align: center; border: 2px solid #5A86FF;
-    }
+    div[data-testid="metric-container"] { background-color: white !important; color: black !important; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); text-align: center; border: 2px solid #5A86FF; }
     div[data-testid="metric-container"] label { color: #444 !important; font-size: 0.9rem; }
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] { color: black !important; font-weight: 800; }
-    /* Centrados */
     .centered { display: flex; justify-content: center; align-items: center; }
-    /* Cards */
-    .card-white {
-        background: white; color: black; border-radius: 24px; padding: 18px 24px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-    .card-red {
-        background: white; color: #c8102e; border-radius: 18px; padding: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #c8102e;
-    }
-    .card-green {
-        background: white; color: #0c7a43; border-radius: 18px; padding: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #0c7a43;
-    }
+    .card-white { background: white; color: black; border-radius: 24px; padding: 18px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    .card-red { background: white; color: #c8102e; border-radius: 18px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #c8102e; }
+    .card-green { background: white; color: #0c7a43; border-radius: 18px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #0c7a43; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -66,8 +41,77 @@ tabs = st.tabs([
     "Visual LAB"
 ])
 
+# ---------- Helpers ----------
+def to_float(txt, default=None):
+    txt = str(txt).strip()
+    if txt == "": return default
+    try: return float(txt)
+    except: return default
+
+def normal_curve_with_ci(mu, se, lower, upper, hypo=None, crit=None, stat=None, title=""):
+    xs = np.linspace(mu - 4*se, mu + 4*se, 400)
+    ys = stats.norm.pdf(xs, mu, se)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF'), name='Distribución'))
+    fig.add_vrect(x0=lower, x1=upper, fillcolor='rgba(124,77,255,0.25)', line_width=0, annotation_text="IC")
+    fig.add_vline(x=mu, line_width=2, line_dash="dash", line_color="white", annotation_text="Media muestral")
+    if hypo is not None:
+        fig.add_vline(x=hypo, line_width=2, line_dash="dot", line_color="#FFAA00", annotation_text="Valor hipotético")
+    if crit is not None and stat is not None:
+        # zona crítica bilateral
+        fig.add_vrect(x0=mu-crit*se, x1=xs[0], fillcolor='rgba(200,0,0,0.25)', line_width=0)
+        fig.add_vrect(x0=mu+crit*se, x1=xs[-1], fillcolor='rgba(200,0,0,0.25)', line_width=0)
+        fig.add_vline(x=stat*se+0 if hypo is None else stat*se + hypo, line_width=2, line_dash="dash", line_color="#FFD700", annotation_text="Estadístico")
+    fig.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'),
+                      title=title, xaxis_title="Valor", yaxis_title="Densidad")
+    return fig
+
+def dual_curve(mu1, se1, mu2, se2, lower_diff=None, upper_diff=None):
+    xs = np.linspace(min(mu1,mu2)-4*max(se1,se2), max(mu1,mu2)+4*max(se1,se2), 400)
+    y1 = stats.norm.pdf(xs, mu1, se1)
+    y2 = stats.norm.pdf(xs, mu2, se2)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=xs, y=y1, mode='lines', line=dict(color='#5A86FF'), name='Grupo 1'))
+    fig.add_trace(go.Scatter(x=xs, y=y2, mode='lines', line=dict(color='#FF6B6B'), name='Grupo 2'))
+    if lower_diff is not None and upper_diff is not None:
+        fig.add_vline(x=0, line_width=2, line_dash="dash", line_color="white", annotation_text="0 (sin diferencia)")
+        fig.add_vrect(x0=lower_diff, x1=upper_diff, fillcolor='rgba(255,255,255,0.15)', line_width=0, annotation_text="IC de la diferencia")
+    fig.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'),
+                      xaxis_title="Valor", yaxis_title="Densidad")
+    return fig
+
+def bar_ci(labels, means, lowers, uppers, title=""):
+    fig = go.Figure()
+    for i, lab in enumerate(labels):
+        fig.add_trace(go.Bar(
+            x=[lab], y=[means[i]],
+            error_y=dict(type='data', array=[uppers[i]-means[i]], arrayminus=[means[i]-lowers[i]], visible=True, color="white"),
+            marker_color='#7C4DFF' if i==0 else '#FF6B6B',
+            name=lab,
+            opacity=0.9
+        ))
+    fig.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'),
+                      title=title, yaxis_title="Estimación", xaxis_title="")
+    return fig
+
+def n_vs_error_plot(z, sd_use, n_max=400, finite_N=None):
+    ns = np.arange(5, n_max+1)
+    E_inf = z*sd_use/np.sqrt(ns)
+    if finite_N and finite_N>0:
+        E_fin = z*sd_use/np.sqrt(ns) * np.sqrt((finite_N-ns)/(finite_N-1))
+    else:
+        E_fin = None
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ns, y=E_inf, mode='lines', name='Población infinita', line=dict(color='#5A86FF')))
+    if E_fin is not None:
+        fig.add_trace(go.Scatter(x=ns, y=E_fin, mode='lines', name='Población finita', line=dict(color='#00E676')))
+    fig.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'),
+                      xaxis_title="Tamaño de muestra (n)", yaxis_title="Margen de error (E)",
+                      title="Relación n vs. E")
+    return fig
+
 # ---------------------------------------------------------------------
-# PESTAÑA 1: Medidas de tendencia central
+# PESTAÑA 1: Medidas de tendencia central (igual que antes)
 # ---------------------------------------------------------------------
 with tabs[0]:
     col_izq, col_der = st.columns([1, 2])
@@ -224,7 +268,7 @@ with tabs[0]:
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
 
 # ---------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (Media y Proporción) con subíndices
+# PESTAÑA 2: Inferencia estadística (Media y Proporción) con gráficas mejoradas
 # ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
@@ -239,15 +283,6 @@ with tabs[1]:
     )
 
     st.markdown("### Datos:")
-
-    def to_float(txt, default=None):
-        txt = str(txt).strip()
-        if txt == "":
-            return default
-        try:
-            return float(txt)
-        except:
-            return None
 
     colA, colB, colC = st.columns(3)
     if tipo_inferencia == "Promedio (Media)":
@@ -302,13 +337,14 @@ with tabs[1]:
             stat_test = None
             decision = ""
             p_value = None
+            hypo_val = None
 
             if tipo_inferencia == "Promedio (Media)":
                 x_bar = to_float(x_bar_txt, 0)
                 sigma = to_float(sigma_txt, 0)
                 s_muestral = to_float(s_txt, 0)
                 mu0 = to_float(mu0_txt, 0)
-
+                hypo_val = mu0
                 if sigma and sigma > 0:
                     se = sigma / math.sqrt(n_inf)
                     metodo = "Normal (Z) - σ conocida"
@@ -333,10 +369,10 @@ with tabs[1]:
                             stat_test = (x_bar - mu0) / se
                             p_value = 2 * (1 - stats.t.cdf(abs(stat_test), df))
                             decision = "Rechaza H₀" if abs(stat_test) > crit else "No se rechaza H₀"
-
             else:  # Proporción
                 x_success = to_float(x_success_txt, 0)
                 mu0 = to_float(mu0_txt, 0.5)
+                hypo_val = mu0
                 p_hat = x_success / n_inf if n_inf else 0
                 se = math.sqrt(p_hat * (1 - p_hat) / n_inf) if n_inf else 0
                 crit = stats.norm.ppf(1 - alpha/2)
@@ -388,25 +424,21 @@ with tabs[1]:
                         f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}."
                         f"</div>", unsafe_allow_html=True)
 
-                # Curva
-                if lower is not None and upper is not None:
-                    center = (lower + upper) / 2
-                    xs = np.linspace(center - 4*(upper-lower), center + 4*(upper-lower), 400)
-                    ys = stats.norm.pdf(xs, loc=center, scale=se if se>0 else 1)
-                    fig_curve = go.Figure()
-                    fig_curve.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF'), name='Distribución'))
-                    fig_curve.add_vrect(x0=lower, x1=upper, fillcolor='rgba(124,77,255,0.25)', line_width=0, annotation_text="IC")
-                    fig_curve.add_vline(x=center, line_width=2, line_dash="dash", line_color="white", annotation_text="Centro")
-                    fig_curve.update_layout(
-                        plot_bgcolor='black',
-                        paper_bgcolor='black',
-                        font=dict(color='white'),
-                        xaxis_title="Valor", yaxis_title="Densidad"
-                    )
-                    st.plotly_chart(fig_curve, use_container_width=True)
+                # Curva con IC, línea en valor hipotético y zona crítica
+                fig_curve = normal_curve_with_ci(
+                    mu=x_bar if tipo_inferencia=="Promedio (Media)" else p_hat,
+                    se=se,
+                    lower=lower,
+                    upper=upper,
+                    hypo=hypo_val,
+                    crit=crit,
+                    stat=stat_test if stat_test is not None else None,
+                    title="Distribución, IC y zonas críticas"
+                )
+                st.plotly_chart(fig_curve, use_container_width=True)
 
 # ---------------------------------------------------------------------
-# PESTAÑA 3: Comparación de dos poblaciones (medias y proporciones)
+# PESTAÑA 3: Comparación de dos poblaciones (medias y proporciones) con gráficos extra
 # ---------------------------------------------------------------------
 with tabs[2]:
     st.markdown("## Comparación de Dos Grupos")
@@ -514,6 +546,18 @@ with tabs[2]:
                     f"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}."
                     f"</div>", unsafe_allow_html=True)
 
+                # Gráficos: dos curvas y barras con IC individuales y línea en 0 para la diferencia
+                fig_dual = dual_curve(x1, s1/math.sqrt(n1), x2, s2/math.sqrt(n2), lower_diff=lower, upper_diff=upper)
+                st.plotly_chart(fig_dual, use_container_width=True)
+
+                # Barras comparativas
+                ci1_lower = x1 - crit * s1/math.sqrt(n1)
+                ci1_upper = x1 + crit * s1/math.sqrt(n1)
+                ci2_lower = x2 - crit * s2/math.sqrt(n2)
+                ci2_upper = x2 + crit * s2/math.sqrt(n2)
+                fig_bar = bar_ci(["Media 1", "Media 2"], [x1, x2], [ci1_lower, ci2_lower], [ci1_upper, ci2_upper], title="IC individuales por grupo")
+                st.plotly_chart(fig_bar, use_container_width=True)
+
         else:  # Diferencia de Proporciones
             x1 = tf(x1_txt, 0); x2 = tf(x2_txt, 0)
             n1 = tf(n1_txt, None); n2 = tf(n2_txt, None)
@@ -568,8 +612,20 @@ with tabs[2]:
                     f"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}."
                     f"</div>", unsafe_allow_html=True)
 
+                # Curvas
+                fig_dual = dual_curve(p1_hat, math.sqrt(p1_hat*(1-p1_hat)/n1), p2_hat, math.sqrt(p2_hat*(1-p2_hat)/n2), lower_diff=lower, upper_diff=upper)
+                st.plotly_chart(fig_dual, use_container_width=True)
+
+                # Barras comparativas IC de p1 y p2
+                ci1_lower = p1_hat - crit * math.sqrt(p1_hat*(1-p1_hat)/n1)
+                ci1_upper = p1_hat + crit * math.sqrt(p1_hat*(1-p1_hat)/n1)
+                ci2_lower = p2_hat - crit * math.sqrt(p2_hat*(1-p2_hat)/n2)
+                ci2_upper = p2_hat + crit * math.sqrt(p2_hat*(1-p2_hat)/n2)
+                fig_bar = bar_ci(["Proporción 1", "Proporción 2"], [p1_hat, p2_hat], [ci1_lower, ci2_lower], [ci1_upper, ci2_upper], title="IC individuales por grupo")
+                st.plotly_chart(fig_bar, use_container_width=True)
+
 # ---------------------------------------------------------------------
-# PESTAÑA 4: Tamaño de muestra (media / proporción, con corrección finita)
+# PESTAÑA 4: Tamaño de muestra (media / proporción, con corrección finita) + gráfico n vs E
 # ---------------------------------------------------------------------
 with tabs[3]:
     st.markdown("## Tamaño de Muestra")
@@ -657,11 +713,10 @@ with tabs[3]:
         if n0 is not None:
             n_req = math.ceil(n0)
             usado_finite = False
-            if calc_finite:
-                N = tf2(N_txt, None)
-                if N and N > 0:
-                    n_req = math.ceil((N * n0) / (N + n0 - 1))
-                    usado_finite = True
+            N_val = tf2(N_txt, None) if calc_finite else None
+            if calc_finite and N_val and N_val > 0:
+                n_req = math.ceil((N_val * n0) / (N_val + n0 - 1))
+                usado_finite = True
 
             st.markdown("---")
             st.markdown("## Resultado")
@@ -682,16 +737,95 @@ with tabs[3]:
                 else:
                     detalle += f" para estimar la proporción con un margen de error de {E}."
                 if usado_finite:
-                    detalle += f" Considerando población finita N={int(tf2(N_txt,0))}."
-                interp = (
-                    f"{detalle}<br>"
-                    f"Método usado: {metodo}"
-                )
+                    detalle += f" Considerando población finita N={int(N_val)}."
+                interp = f"{detalle}<br>Método usado: {metodo}"
                 st.markdown(f"<div class='card-white'>{interp}</div>", unsafe_allow_html=True)
 
+            # Gráfico n vs E
+            if tipo_n == "Por media":
+                sd_use = sigma if sigma and sigma > 0 else s
+            else:
+                sd_use = math.sqrt(p_hat*(1-p_hat))
+            fig_nvse = n_vs_error_plot(z, sd_use, n_max=400, finite_N=N_val if calc_finite else None)
+            st.plotly_chart(fig_nvse, use_container_width=True)
+
 # ---------------------------------------------------------------------
-# PESTAÑA 5: Visual LAB (placeholder)
+# PESTAÑA 5: Visual LAB (simulaciones/param)
 # ---------------------------------------------------------------------
 with tabs[4]:
-    st.markdown("### Visual LAB")
-    st.info("En construcción. Aquí podrás agregar visualizaciones personalizadas.")
+    st.markdown("## Visual LAB (simulaciones y didáctica)")
+    st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
+    st.write("Explora visualmente cómo cambian los resultados al variar parámetros.")
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        n_sim_txt = st.text_input("Tamaño de muestra (n)", value="30", key="vlab_n")
+    with col2:
+        mu_sim_txt = st.text_input("Media (μ) o proporción (p)", value="0.5", key="vlab_mu")
+    with col3:
+        sigma_sim_txt = st.text_input("Desviación estándar (σ) (para medias)", value="1", key="vlab_sigma")
+    with col4:
+        nivel_sim_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="vlab_nivel")
+
+    col5, col6 = st.columns(2)
+    with col5:
+        sims_txt = st.text_input("Número de simulaciones (para TLC)", value="500", key="vlab_sims")
+    with col6:
+        raw_data_txt = st.text_input("Datos (opcional, para histograma)", value="", key="vlab_raw")
+
+    run_sim = st.button("Generar visualizaciones (Visual LAB)")
+
+    if run_sim:
+        n_sim = to_float(n_sim_txt, 30)
+        mu_sim = to_float(mu_sim_txt, 0.5)
+        sigma_sim = to_float(sigma_sim_txt, 1)
+        nivel_sim = to_float(nivel_sim_txt, 95)
+        sims = int(to_float(sims_txt, 500))
+        alpha_sim = 1 - (nivel_sim / 100.0)
+        z_sim = stats.norm.ppf(1 - alpha_sim/2)
+
+        if n_sim is None or n_sim <= 0:
+            st.error("n debe ser > 0")
+        else:
+            # Simulación TLC para medias
+            np.random.seed(0)
+            sample_means = np.mean(np.random.normal(mu_sim, sigma_sim, size=(sims, int(n_sim))), axis=1)
+            fig_tlc = px.histogram(sample_means, nbins=40, title="Distribución muestral de medias (TLC)",
+                                   labels={"value":"Media simulada", "count":"Frecuencia"})
+            fig_tlc.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'))
+            st.plotly_chart(fig_tlc, use_container_width=True)
+
+            # Error estándar vs n
+            ns = np.arange(5, 300)
+            ee = sigma_sim/np.sqrt(ns)
+            fig_ee = go.Figure()
+            fig_ee.add_trace(go.Scatter(x=ns, y=ee, mode='lines', line=dict(color='#7C4DFF')))
+            fig_ee.update_layout(title="Error estándar (EE) vs n", xaxis_title="n", yaxis_title="EE",
+                                 plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'))
+            st.plotly_chart(fig_ee, use_container_width=True)
+
+            # Histograma de datos originales
+            if raw_data_txt.strip():
+                try:
+                    raw_vals = [float(x) for x in raw_data_txt.replace(',', ' ').split()]
+                    fig_raw = px.histogram(raw_vals, nbins=20, title="Histograma de datos originales")
+                    fig_raw.update_layout(plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'))
+                    fig_raw.add_vline(x=np.mean(raw_vals), line_color="white", line_dash="dash", annotation_text="Media")
+                    fig_raw.add_vline(x=np.median(raw_vals), line_color="#00E676", line_dash="dot", annotation_text="Mediana")
+                    st.plotly_chart(fig_raw, use_container_width=True)
+                except:
+                    st.warning("No se pudieron parsear los datos para el histograma.")
+
+            # Zona crítica demostrativa
+            xs = np.linspace(-4,4,400)
+            ys = stats.norm.pdf(xs)
+            fig_crit = go.Figure()
+            fig_crit.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF')))
+            fig_crit.add_vrect(x0=-z_sim, x1=z_sim, fillcolor='rgba(255,255,255,0.1)', line_width=0, annotation_text="Aceptación")
+            fig_crit.add_vrect(x0=xs[0], x1=-z_sim, fillcolor='rgba(200,0,0,0.3)', line_width=0, annotation_text="Rechazo")
+            fig_crit.add_vrect(x0=z_sim, x1=xs[-1], fillcolor='rgba(200,0,0,0.3)', line_width=0, annotation_text="Rechazo")
+            fig_crit.update_layout(title="Zonas críticas (prueba bilateral)", plot_bgcolor='black', paper_bgcolor='black', font=dict(color='white'),
+                                   xaxis_title="Z", yaxis_title="Densidad")
+            st.plotly_chart(fig_crit, use_container_width=True)
+
+            st.success("Visual LAB generado. Ajusta parámetros y vuelve a ejecutar para ver cambios.")
