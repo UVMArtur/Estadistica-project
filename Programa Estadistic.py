@@ -2,58 +2,65 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 import math
 from scipy import stats
 
 st.set_page_config(page_title="Calculadora de Estadística", layout="wide", page_icon="📊")
 
-# Estilos CSS
+# === ESTILOS ===
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: white; }
     h1, h2, h3 { color: white !important; text-align: center; font-family: 'Arial', sans-serif; }
-    .stTextArea textarea { background-color: #111111; color: white; border: 1px solid #4B0082; }
-    .stButton>button {
-        background-color: #6200EA; color: white; border-radius: 20px; width: 100%;
-        border: none; font-weight: bold;
-    }
-    .stButton>button:hover { background-color: #7C4DFF; }
-    /* Tarjetas blancas */
-    div[data-testid="metric-container"] {
-        background-color: white !important; color: black !important;
-        border-radius: 10px; padding: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; border: 2px solid #6200EA;
-    }
-    div[data-testid="metric-container"] label {
-        color: black !important; font-size: 0.9rem;
-    }
-    div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-        color: black !important; font-weight: bold;
-    }
+    /* Tabs */
     .stTabs [data-baseweb="tab-list"] { gap: 20px; justify-content: center; }
     .stTabs [data-baseweb="tab"] { color: white; }
-    .stTabs [aria-selected="true"] { background-color: rgba(98, 0, 234, 0.2); border-bottom: 2px solid #6200EA; }
-    .gradient-line {
-        height: 8px; background: linear-gradient(90deg, #6200EA 0%, #00B0FF 100%);
-        border-radius: 4px; margin-bottom: 20px;
+    .stTabs [aria-selected="true"] { background-color: rgba(98, 0, 234, 0.25); border-bottom: 3px solid #7C4DFF; }
+    /* Gradiente superior */
+    .gradient-line { height: 8px; background: linear-gradient(90deg, #7C4DFF 0%, #00B0FF 100%); border-radius: 4px; margin-bottom: 20px; }
+    /* Inputs */
+    .stTextArea textarea, input[type=text] {
+        background-color: #111111; color: white; border: 1px solid #4B0082;
+    }
+    /* Botones */
+    .stButton>button {
+        background-color: #5A86FF; color: white; border-radius: 24px; width: 100%;
+        border: none; font-weight: bold; padding: 10px 0;
+    }
+    .stButton>button:hover { background-color: #7C9BFF; }
+    /* Tarjetas */
+    div[data-testid="metric-container"] {
+        background-color: white !important; color: black !important;
+        border-radius: 14px; padding: 14px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.15); text-align: center; border: 2px solid #5A86FF;
+    }
+    div[data-testid="metric-container"] label { color: #444 !important; font-size: 0.9rem; }
+    div[data-testid="metric-container"] div[data-testid="stMetricValue"] { color: black !important; font-weight: 800; }
+    /* Centrados */
+    .centered { display: flex; justify-content: center; align-items: center; }
+    /* Cards contenedor */
+    .card-white {
+        background: white; color: black; border-radius: 24px; padding: 18px 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Calculadora de estadística")
+st.title("Calculadora de estadítica")
 st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
 tabs = st.tabs([
     "Medidas de tendencia central",
     "Inferencia estadística",
-    "Comparación de poblaciones",
+    "Comparación de dos poblaciones",
     "Tamaño de muestra",
     "Visual LAB"
 ])
 
-# --------------------------------------------------------------------------------
-# PESTAÑA 1: Medidas de tendencia central (se conserva lógica previa con intervalos corregidos)
-# --------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# PESTAÑA 1: Medidas de tendencia central (manteniendo intervalos corregidos)
+# ---------------------------------------------------------------------
 with tabs[0]:
     col_izq, col_der = st.columns([1, 2])
     data_list = []
@@ -69,7 +76,7 @@ with tabs[0]:
         """, unsafe_allow_html=True)
 
         input_data = st.text_area("Ingresa tus datos aquí", height=150,
-                                  placeholder="Ej: 3.2, 4.5, 7.8, 9.1...",
+                                  placeholder="Ej: 13, 19, 25, 31 ...",
                                   label_visibility="collapsed")
         tipo_datos = st.radio("¿Qué tipo de datos son?", ["Muestra", "Población"], horizontal=True)
         calcular = st.button("Analizar datos")
@@ -87,7 +94,6 @@ with tabs[0]:
         arr = np.array(data_list)
         n = len(arr)
 
-        # Medidas
         media = np.mean(arr)
         mediana = np.median(arr)
         vals, counts = np.unique(arr, return_counts=True)
@@ -133,7 +139,7 @@ with tabs[0]:
             st.markdown(interpretation_html, unsafe_allow_html=True)
 
         st.markdown("---")
-        st.markdown("### Histograma de Frecuencias y Regla de Sturges")
+        st.markdown("### Histograma y tabla de Frecuencias")
 
         # Regla de Sturges
         if n > 1:
@@ -144,7 +150,6 @@ with tabs[0]:
         val_min = np.min(arr)
         val_max = np.max(arr)
 
-        # Intervalos enteros sin solape
         if val_min == val_max:
             width = 1
             display_edges = [math.floor(val_min), math.floor(val_min) + width]
@@ -156,9 +161,7 @@ with tabs[0]:
             display_edges = [val_min_int + i * width for i in range(k + 1)]
             display_edges[-1] = val_max_int
 
-        # Bordes continuos para conteo (desplazados ±0.5)
         bin_edges = [display_edges[0] - 0.5] + [edge + 0.5 for edge in display_edges[1:]]
-
         counts, _ = np.histogram(arr, bins=bin_edges)
 
         grupos = np.arange(1, k + 1)
@@ -203,151 +206,195 @@ with tabs[0]:
             }), height=400)
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
 
-# --------------------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (nueva sección)
-# --------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# PESTAÑA 2: Inferencia estadística (rediseñada)
+# ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
     st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
-    # Tipo de dato
+    # Selector centrado
+    st.markdown('<div class="centered"><b>¿Qué tipo de dato tienes?</b></div>', unsafe_allow_html=True)
     tipo_inferencia = st.radio(
-        "¿Qué tipo de dato tienes?",
+        "",
         ["Promedio (Media)", "Porcentaje (Proporción)", "Posición Individual (Z)"],
-        horizontal=True
+        horizontal=True,
+        index=0
     )
 
     st.markdown("### Datos:")
 
-    col_a, col_b, col_c = st.columns(3)
-    with col_a:
+    # Campos de entrada SIN botones +/- (text_input)
+    def to_float(txt, default=None):
+        txt = str(txt).strip()
+        if txt == "":
+            return default
+        try:
+            return float(txt)
+        except:
+            return None
+
+    colA, colB, colC = st.columns(3)
+    with colA:
         if tipo_inferencia == "Promedio (Media)":
-            x_bar = st.number_input("Promedio muestral (x̄)", value=0.0, step=0.1)
+            x_bar_txt = st.text_input("Promedio muestral (x̄)", value="0")
         elif tipo_inferencia == "Porcentaje (Proporción)":
-            x_bar = st.number_input("Proporción muestral (p̂)", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
+            x_bar_txt = st.text_input("Proporción muestral (p̂) [0-1]", value="0.5")
         else:
-            x_bar = st.number_input("Valor individual", value=0.0, step=0.1)  # Z individual
-    with col_b:
-        n_inf = st.number_input("Tamaño de muestra (n)", min_value=1, value=30, step=1)
-    with col_c:
-        nivel_conf = st.number_input("Nivel de confianza (1-α) %", min_value=50.0, max_value=99.9, value=95.0, step=0.1)
+            x_bar_txt = st.text_input("Valor individual", value="0")
+    with colB:
+        n_txt = st.text_input("Tamaño de muestra (n)", value="30")
+    with colC:
+        nivel_txt = st.text_input("Nivel de confianza (1-α) %", value="95")
 
-    col_d, col_e = st.columns(2)
-    with col_d:
-        sigma = st.number_input("Desviación estándar poblacional (σ) (opcional)", value=0.0, step=0.1)
-    with col_e:
-        s_muestral = st.number_input("Desviación estándar muestral (s) (opcional)", value=0.0, step=0.1)
+    colD, colE = st.columns(2)
+    with colD:
+        sigma_txt = st.text_input("Desviación estándar poblacional (σ) (opcional)", value="")
+    with colE:
+        s_txt = st.text_input("Desviación estándar muestral (s) (opcional)", value="")
 
-    col_f, col_g = st.columns(2)
-    with col_f:
+    colF, colG = st.columns(2)
+    with colF:
         usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H0)")
-    with col_g:
-        mu0 = st.number_input("Valor hipotético (μ0)", value=0.0, step=0.1, disabled=not usar_hipotesis)
+    with colG:
+        mu0_txt = st.text_input("Valor hipotético (μ0)", value="0", disabled=not usar_hipotesis)
 
     calcular_inf = st.button("Calcular Inferencia")
 
     if calcular_inf:
-        alpha = 1 - (nivel_conf / 100.0)
-        tail = 2  # intervalo bilateral por defecto
-        metodo = ""
-        se = None
-        crit = None
-        df = None
-        z_o_t = None
-        lower = None
-        upper = None
-        interpret = ""
-        stat_test = None
-        decision = ""
+        # Parseo
+        x_bar = to_float(x_bar_txt, 0)
+        n_inf = to_float(n_txt, None)
+        nivel_conf = to_float(nivel_txt, 95)
+        sigma = to_float(sigma_txt, 0)
+        s_muestral = to_float(s_txt, 0)
+        mu0 = to_float(mu0_txt, 0)
 
-        if tipo_inferencia == "Promedio (Media)":
-            # Selección de Z o t:
-            if sigma > 0:  # σ conocida
-                se = sigma / math.sqrt(n_inf)
-                metodo = "Normal (Z) - σ poblacional conocida"
-                z_o_t = stats.norm.ppf(1 - alpha/2)
-                crit = z_o_t
-                lower = x_bar - z_o_t * se
-                upper = x_bar + z_o_t * se
-                if usar_hipotesis:
-                    stat_test = (x_bar - mu0) / se
-                    # decisión bilateral
-                    decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
-            else:
-                # σ desconocida: usar s. Si no hay s, no se puede.
-                if s_muestral <= 0:
-                    st.error("Proporciona σ o s para calcular la media.")
-                else:
-                    se = s_muestral / math.sqrt(n_inf)
-                    df = n_inf - 1
-                    z_o_t = stats.t.ppf(1 - alpha/2, df)
-                    crit = z_o_t
-                    metodo = "t-student - σ desconocida"
-                    lower = x_bar - z_o_t * se
-                    upper = x_bar + z_o_t * se
+        if n_inf is None or n_inf <= 0:
+            st.error("n debe ser > 0")
+        else:
+            alpha = 1 - (nivel_conf / 100.0)
+            se = None
+            crit = None
+            df = None
+            lower = None
+            upper = None
+            metodo = ""
+            stat_test = None
+            decision = ""
+            curve_x = np.linspace(-4, 4, 400)
+            tail = 2
+
+            if tipo_inferencia == "Promedio (Media)":
+                if sigma and sigma > 0:
+                    se = sigma / math.sqrt(n_inf)
+                    metodo = "Normal (Z) - σ conocida"
+                    crit = stats.norm.ppf(1 - alpha/2)
+                    lower = x_bar - crit * se
+                    upper = x_bar + crit * se
                     if usar_hipotesis:
                         stat_test = (x_bar - mu0) / se
                         decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
-
-        elif tipo_inferencia == "Porcentaje (Proporción)":
-            if n_inf == 0:
-                st.error("n no puede ser 0.")
-            else:
-                p_hat = x_bar
-                se = math.sqrt(p_hat * (1 - p_hat) / n_inf)
-                z_o_t = stats.norm.ppf(1 - alpha/2)
-                crit = z_o_t
-                metodo = "Normal (Z) - Proporción"
-                lower = p_hat - z_o_t * se
-                upper = p_hat + z_o_t * se
-                if usar_hipotesis:
-                    stat_test = (p_hat - mu0) / se if se > 0 else None
-                    if stat_test is not None:
-                        decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
-
-        else:  # Posición Individual (Z)
-            if sigma <= 0 and s_muestral <= 0:
-                st.error("Proporciona σ o s para calcular Z individual.")
-            else:
-                sd_use = sigma if sigma > 0 else s_muestral
-                se = sd_use
-                metodo = "Z individual"
-                # Para un valor individual, Z = (x - μ0)/σ. Intervalo no aplica igual; damos Z.
-                if usar_hipotesis:
-                    if sd_use == 0:
-                        st.error("σ/s no puede ser 0.")
+                else:
+                    if s_muestral is None or s_muestral <= 0:
+                        st.error("Falta σ o s para media.")
                     else:
-                        stat_test = (x_bar - mu0) / sd_use
-                        z_o_t = stats.norm.ppf(1 - alpha/2)
-                        crit = z_o_t
+                        se = s_muestral / math.sqrt(n_inf)
+                        df = n_inf - 1
+                        crit = stats.t.ppf(1 - alpha/2, df)
+                        metodo = "t-student - σ desconocida"
+                        lower = x_bar - crit * se
+                        upper = x_bar + crit * se
+                        if usar_hipotesis:
+                            stat_test = (x_bar - mu0) / se
+                            decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
+
+            elif tipo_inferencia == "Porcentaje (Proporción)":
+                if n_inf == 0:
+                    st.error("n no puede ser 0.")
+                else:
+                    p_hat = x_bar
+                    se = math.sqrt(p_hat * (1 - p_hat) / n_inf)
+                    crit = stats.norm.ppf(1 - alpha/2)
+                    metodo = "Normal (Z) - Proporción"
+                    lower = p_hat - crit * se
+                    upper = p_hat + crit * se
+                    if usar_hipotesis and se > 0:
+                        stat_test = (p_hat - mu0) / se
                         decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
-                lower = None
-                upper = None
 
-        # Mostrar resultados si se pudo calcular SE
-        if se is not None:
-            st.markdown("---")
-            st.markdown("### Resultados")
+            else:  # Posición Individual (Z)
+                sd_use = sigma if sigma and sigma > 0 else s_muestral
+                if sd_use is None or sd_use <= 0:
+                    st.error("Proporciona σ o s para posición individual.")
+                else:
+                    se = sd_use
+                    metodo = "Z individual"
+                    if usar_hipotesis:
+                        stat_test = (x_bar - mu0) / sd_use
+                        crit = stats.norm.ppf(1 - alpha/2)
+                        decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
 
-            c1, c2, c3 = st.columns(3)
-            with c1: st.metric("Error estándar", f"{se:.4f}")
-            if df is not None:
-                with c2: st.metric("Grados de libertad", f"{df}")
-            else:
-                with c2: st.metric("Crítico Z", f"{crit:.4f}")
-            if crit is not None:
-                with c3:
-                    lblc = "Valor crítico t" if df is not None else "Valor crítico Z"
-                    st.metric(lblc, f"{crit:.4f}")
+            if se is not None:
+                st.markdown("---")
+                st.markdown("### Resultados")
 
-            if lower is not None and upper is not None:
-                st.markdown("### Intervalo de confianza")
-                st.markdown(f"IC bilateral al {nivel_conf:.1f}%: [{lower:.4f}, {upper:.4f}]")
-                st.markdown(f"Amplitud total: ±{crit*se:.4f}")
-                st.info(f"Método usado: {metodo}")
+                # Tarjetas de resumen
+                row1 = st.columns(3)
+                with row1[0]: st.metric("Error estándar", f"{se:.4f}")
+                if df is not None:
+                    with row1[1]: st.metric("Grados de libertad", f"{int(df)}")
+                else:
+                    with row1[1]: st.metric("Valor crítico Z", f"{crit:.4f}" if crit else "—")
+                with row1[2]:
+                    lblc = "Valor crítico t" if df is not None else "Valor crítico"
+                    st.metric(lblc, f"{crit:.4f}" if crit else "—")
 
-            if usar_hipotesis and stat_test is not None:
-                st.markdown("### Prueba de hipótesis")
-                st.write(f"Estadístico de prueba: {stat_test:.4f}")
-                st.write(f"Decisión (bilateral, α={alpha:.3f}): **{decision}**")
-                st.write(f"Método: {metodo}")
+                row2 = st.columns(3)
+                if lower is not None and upper is not None:
+                    with row2[0]: st.metric("Intervalo (±)", f"±{crit*se:.4f}")
+                    with row2[1]: st.metric("Límite Inferior", f"{lower:.4f}")
+                    with row2[2]: st.metric("Límite Superior", f"{upper:.4f}")
+
+                # Interpretación
+                interp = []
+                if lower is not None and upper is not None:
+                    interp.append(f"Con un {nivel_conf:.1f}% de confianza, el verdadero parámetro está entre {lower:.4f} y {upper:.4f}.")
+                interp.append(f"Método usado: {metodo}. Error estándar: {se:.4f}.")
+                if usar_hipotesis and stat_test is not None:
+                    interp.append(f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}.")
+                st.markdown("#### Interpretación del intervalo / prueba")
+                st.markdown(f"<div class='card-white'>{'<br>'.join(interp)}</div>", unsafe_allow_html=True)
+
+                # Curva
+                if lower is not None and upper is not None:
+                    mean_curve = x_bar
+                    xs = np.linspace(mean_curve - 4*se*crit if crit else mean_curve-4*se,
+                                     mean_curve + 4*se*crit if crit else mean_curve+4*se, 400)
+                    # usar normal para visualizar
+                    ys = stats.norm.pdf(xs, loc=mean_curve, scale=se)
+                    fig_curve = go.Figure()
+                    fig_curve.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF'), name='Distribución'))
+                    fig_curve.add_vline(x=mean_curve, line_width=2, line_dash="dash", line_color="white", annotation_text="Media/Est.")
+                    fig_curve.add_vrect(x0=lower, x1=upper, fillcolor='rgba(124,77,255,0.2)', line_width=0, annotation_text="IC")
+                    fig_curve.update_layout(
+                        plot_bgcolor='black', paper_bgcolor='black',
+                        font=dict(color='white'),
+                        xaxis_title="Valor", yaxis_title="Densidad"
+                    )
+                    st.plotly_chart(fig_curve, use_container_width=True)
+                elif stat_test is not None:
+                    xs = np.linspace(-4, 4, 400)
+                    ys = stats.norm.pdf(xs, 0, 1)
+                    fig_curve = go.Figure()
+                    fig_curve.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF')))
+                    fig_curve.add_vline(x=stat_test, line_width=2, line_dash="dash", line_color="white", annotation_text="Z/t")
+                    if crit:
+                        fig_curve.add_vline(x=crit, line_width=1, line_dash="dot", line_color="#7C4DFF")
+                        fig_curve.add_vline(x=-crit, line_width=1, line_dash="dot", line_color="#7C4DFF")
+                    fig_curve.update_layout(
+                        plot_bgcolor='black', paper_bgcolor='black',
+                        font=dict(color='white'),
+                        xaxis_title="Z / t", yaxis_title="Densidad"
+                    )
+                    st.plotly_chart(fig_curve, use_container_width=True)
