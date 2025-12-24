@@ -16,19 +16,19 @@ st.markdown("""
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] { gap: 20px; justify-content: center; }
     .stTabs [data-baseweb="tab"] { color: white; }
-    .stTabs [aria-selected="true"] { background-color: rgba(98, 0, 234, 0.25); border-bottom: 3px solid #7C4DFF; }
+    .stTabs [aria-selected="true"] { background-color: rgba(124, 77, 255, 0.28); border-bottom: 3px solid #7C4DFF; }
     /* Gradiente superior */
     .gradient-line { height: 8px; background: linear-gradient(90deg, #7C4DFF 0%, #00B0FF 100%); border-radius: 4px; margin-bottom: 20px; }
     /* Inputs */
     .stTextArea textarea, input[type=text] {
-        background-color: #111111; color: white; border: 1px solid #4B0082;
+        background-color: #111111; color: white; border: 1px solid #7C4DFF;
     }
-    /* Botones */
+    /* Botones morados */
     .stButton>button {
-        background-color: #5A86FF; color: white; border-radius: 24px; width: 100%;
-        border: none; font-weight: bold; padding: 10px 0;
+        background-color: #7C4DFF; color: white; border-radius: 16px; width: 100%;
+        border: none; font-weight: bold; padding: 12px 0;
     }
-    .stButton>button:hover { background-color: #7C9BFF; }
+    .stButton>button:hover { background-color: #9b6bff; }
     /* Tarjetas */
     div[data-testid="metric-container"] {
         background-color: white !important; color: black !important;
@@ -59,7 +59,7 @@ tabs = st.tabs([
 ])
 
 # ---------------------------------------------------------------------
-# PESTAÑA 1: Medidas de tendencia central (manteniendo intervalos corregidos)
+# PESTAÑA 1: Medidas de tendencia central
 # ---------------------------------------------------------------------
 with tabs[0]:
     col_izq, col_der = st.columns([1, 2])
@@ -78,7 +78,9 @@ with tabs[0]:
         input_data = st.text_area("Ingresa tus datos aquí", height=150,
                                   placeholder="Ej: 13, 19, 25, 31 ...",
                                   label_visibility="collapsed")
-        tipo_datos = st.radio("¿Qué tipo de datos son?", ["Muestra", "Población"], horizontal=True)
+        # radio centrado
+        st.markdown('<div class="centered"><b>¿Qué tipo de datos son?</b></div>', unsafe_allow_html=True)
+        tipo_datos = st.radio("", ["Muestra", "Población"], horizontal=True)
         calcular = st.button("Analizar datos")
 
     if input_data:
@@ -96,6 +98,13 @@ with tabs[0]:
 
         media = np.mean(arr)
         mediana = np.median(arr)
+        skewness = stats.skew(arr)
+        if skewness > 0.3:
+            sesgo = "Sesgo a la derecha (cola a la derecha)."
+        elif skewness < -0.3:
+            sesgo = "Sesgo a la izquierda (cola a la izquierda)."
+        else:
+            sesgo = "Distribución aproximadamente simétrica."
         vals, counts = np.unique(arr, return_counts=True)
         max_count = np.max(counts)
         if max_count == 1:
@@ -133,7 +142,8 @@ with tabs[0]:
             <div style="background-color: white; color: black; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 5px solid #6200EA;">
                 <strong>Interpretación:</strong><br>
                 Con una {tipo_datos.lower()} de <strong>{n}</strong> datos, el centro se ubica en <strong>{media:.2f}</strong>.
-                La dispersión es de <strong>{desviacion_std:.2f}</strong>.
+                La dispersión es de <strong>{desviacion_std:.2f}</strong>.<br>
+                {sesgo}
             </div>
             """
             st.markdown(interpretation_html, unsafe_allow_html=True)
@@ -207,13 +217,12 @@ with tabs[0]:
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
 
 # ---------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (rediseñada)
+# PESTAÑA 2: Inferencia estadística
 # ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
     st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
-    # Selector centrado
     st.markdown('<div class="centered"><b>¿Qué tipo de dato tienes?</b></div>', unsafe_allow_html=True)
     tipo_inferencia = st.radio(
         "",
@@ -224,7 +233,6 @@ with tabs[1]:
 
     st.markdown("### Datos:")
 
-    # Campos de entrada SIN botones +/- (text_input)
     def to_float(txt, default=None):
         txt = str(txt).strip()
         if txt == "":
@@ -262,7 +270,6 @@ with tabs[1]:
     calcular_inf = st.button("Calcular Inferencia")
 
     if calcular_inf:
-        # Parseo
         x_bar = to_float(x_bar_txt, 0)
         n_inf = to_float(n_txt, None)
         nivel_conf = to_float(nivel_txt, 95)
@@ -282,8 +289,6 @@ with tabs[1]:
             metodo = ""
             stat_test = None
             decision = ""
-            curve_x = np.linspace(-4, 4, 400)
-            tail = 2
 
             if tipo_inferencia == "Promedio (Media)":
                 if sigma and sigma > 0:
@@ -339,39 +344,40 @@ with tabs[1]:
                 st.markdown("---")
                 st.markdown("### Resultados")
 
-                # Tarjetas de resumen
                 row1 = st.columns(3)
                 with row1[0]: st.metric("Error estándar", f"{se:.4f}")
                 if df is not None:
                     with row1[1]: st.metric("Grados de libertad", f"{int(df)}")
+                    with row1[2]: st.metric("Valor crítico t", f"{crit:.4f}" if crit else "—")
                 else:
                     with row1[1]: st.metric("Valor crítico Z", f"{crit:.4f}" if crit else "—")
-                with row1[2]:
-                    lblc = "Valor crítico t" if df is not None else "Valor crítico"
-                    st.metric(lblc, f"{crit:.4f}" if crit else "—")
+                    with row1[2]: st.metric("Intervalo (±)", f"±{crit*se:.4f}" if crit else "—")
 
-                row2 = st.columns(3)
                 if lower is not None and upper is not None:
-                    with row2[0]: st.metric("Intervalo (±)", f"±{crit*se:.4f}")
-                    with row2[1]: st.metric("Límite Inferior", f"{lower:.4f}")
-                    with row2[2]: st.metric("Límite Superior", f"{upper:.4f}")
+                    row2 = st.columns(2)
+                    with row2[0]: st.metric("Límite Inferior", f"{lower:.4f}")
+                    with row2[1]: st.metric("Límite Superior", f"{upper:.4f}")
 
-                # Interpretación
+                # Interpretación y prueba de hipótesis resaltada
                 interp = []
                 if lower is not None and upper is not None:
                     interp.append(f"Con un {nivel_conf:.1f}% de confianza, el verdadero parámetro está entre {lower:.4f} y {upper:.4f}.")
                 interp.append(f"Método usado: {metodo}. Error estándar: {se:.4f}.")
-                if usar_hipotesis and stat_test is not None:
-                    interp.append(f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}.")
-                st.markdown("#### Interpretación del intervalo / prueba")
+                st.markdown("#### Interpretación / Prueba")
                 st.markdown(f"<div class='card-white'>{'<br>'.join(interp)}</div>", unsafe_allow_html=True)
+
+                if usar_hipotesis and stat_test is not None:
+                    st.markdown(
+                        f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
+                        f"border:2px solid #7C4DFF;font-weight:700;'>"
+                        f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}."
+                        f"</div>", unsafe_allow_html=True)
 
                 # Curva
                 if lower is not None and upper is not None:
                     mean_curve = x_bar
                     xs = np.linspace(mean_curve - 4*se*crit if crit else mean_curve-4*se,
                                      mean_curve + 4*se*crit if crit else mean_curve+4*se, 400)
-                    # usar normal para visualizar
                     ys = stats.norm.pdf(xs, loc=mean_curve, scale=se)
                     fig_curve = go.Figure()
                     fig_curve.add_trace(go.Scatter(x=xs, y=ys, mode='lines', line=dict(color='#5A86FF'), name='Distribución'))
