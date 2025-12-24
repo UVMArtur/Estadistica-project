@@ -44,6 +44,11 @@ st.markdown("""
         background: white; color: black; border-radius: 24px; padding: 18px 24px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
+    /* Tarjetas rojas para comparación dos poblaciones */
+    .card-red {
+        background: white; color: #c8102e; border-radius: 18px; padding: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #c8102e;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -216,7 +221,7 @@ with tabs[0]:
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
 
 # ---------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (solo Media y Proporción)
+# PESTAÑA 2: Inferencia estadística (solo Media y Proporción) con subíndices
 # ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
@@ -241,7 +246,6 @@ with tabs[1]:
         except:
             return None
 
-    # Entradas según tipo
     colA, colB, colC = st.columns(3)
     if tipo_inferencia == "Promedio (Media)":
         with colA:
@@ -249,7 +253,7 @@ with tabs[1]:
         with colB:
             n_txt = st.text_input("Tamaño de muestra (n)", value="30")
         with colC:
-            nivel_txt = st.text_input("Nivel de confianza (1-α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
 
         colD, colE = st.columns(2)
         with colD:
@@ -259,9 +263,9 @@ with tabs[1]:
 
         colF, colG = st.columns(2)
         with colF:
-            usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H0)")
+            usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H₀)")
         with colG:
-            mu0_txt = st.text_input("Valor hipotético (μ0)", value="0", disabled=not usar_hipotesis)
+            mu0_txt = st.text_input("Valor hipotético (μ₀)", value="0", disabled=not usar_hipotesis)
 
     else:  # Proporción
         with colA:
@@ -269,13 +273,13 @@ with tabs[1]:
         with colB:
             n_txt = st.text_input("Tamaño de muestra (n)", value="30")
         with colC:
-            nivel_txt = st.text_input("Nivel de confianza (1-α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
 
         colF, colG = st.columns(2)
         with colF:
-            usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H0)")
+            usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H₀)")
         with colG:
-            mu0_txt = st.text_input("Proporción hipotética (p0)", value="0.5", disabled=not usar_hipotesis)
+            mu0_txt = st.text_input("Proporción hipotética (p₀)", value="0.5", disabled=not usar_hipotesis)
 
     calcular_inf = st.button("Calcular Inferencia")
 
@@ -298,9 +302,9 @@ with tabs[1]:
             p_value = None
 
             if tipo_inferencia == "Promedio (Media)":
-                x_bar = to_float(st.session_state.get('x_bar_val', None) or x_bar_txt, 0)
-                sigma = to_float(st.session_state.get('sigma_val', None) or sigma_txt, 0)
-                s_muestral = to_float(st.session_state.get('s_val', None) or s_txt, 0)
+                x_bar = to_float(x_bar_txt, 0)
+                sigma = to_float(sigma_txt, 0)
+                s_muestral = to_float(s_txt, 0)
                 mu0 = to_float(mu0_txt, 0)
 
                 if sigma and sigma > 0:
@@ -312,7 +316,7 @@ with tabs[1]:
                     if usar_hipotesis:
                         stat_test = (x_bar - mu0) / se
                         p_value = 2 * (1 - stats.norm.cdf(abs(stat_test)))
-                        decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
+                        decision = "Rechaza H₀" if abs(stat_test) > crit else "No se rechaza H₀"
                 else:
                     if s_muestral is None or s_muestral <= 0:
                         st.error("Falta σ o s para media.")
@@ -326,7 +330,7 @@ with tabs[1]:
                         if usar_hipotesis:
                             stat_test = (x_bar - mu0) / se
                             p_value = 2 * (1 - stats.t.cdf(abs(stat_test), df))
-                            decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
+                            decision = "Rechaza H₀" if abs(stat_test) > crit else "No se rechaza H₀"
 
             else:  # Proporción
                 x_success = to_float(x_success_txt, 0)
@@ -340,7 +344,7 @@ with tabs[1]:
                 if usar_hipotesis and se > 0:
                     stat_test = (p_hat - mu0) / se
                     p_value = 2 * (1 - stats.norm.cdf(abs(stat_test)))
-                    decision = "Rechaza H0" if abs(stat_test) > crit else "No se rechaza H0"
+                    decision = "Rechaza H₀" if abs(stat_test) > crit else "No se rechaza H₀"
 
             if se is not None:
                 st.markdown("---")
@@ -378,7 +382,7 @@ with tabs[1]:
                 if stat_test is not None:
                     st.markdown(
                         f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
-                        f"border:2px solid #7C4DFF;font-weight:700;margin-top:10px;'>"
+                        f"border:2px solid #7C4DFF;font-weight:700;margin-top:12px;'>"
                         f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}."
                         f"</div>", unsafe_allow_html=True)
 
@@ -397,3 +401,167 @@ with tabs[1]:
                         xaxis_title="Valor", yaxis_title="Densidad"
                     )
                     st.plotly_chart(fig_curve, use_container_width=True)
+
+# ---------------------------------------------------------------------
+# PESTAÑA 3: Comparación de dos poblaciones (medias y proporciones)
+# ---------------------------------------------------------------------
+with tabs[2]:
+    st.markdown("## Comparación de Dos Grupos")
+    st.markdown('<div class="gradient-line" style="background: linear-gradient(90deg,#c8102e 0%,#ff6b6b 100%);"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="centered"><b>Seleccione Análisis</b></div>', unsafe_allow_html=True)
+    analisis = st.radio("", ["Diferencia de Medias", "Diferencia de Proporciones"], horizontal=True, index=0)
+
+    st.markdown("### Datos:")
+
+    def tf(txt, default=None):
+        txt = str(txt).strip()
+        if txt == "":
+            return default
+        try:
+            return float(txt)
+        except:
+            return None
+
+    if analisis == "Diferencia de Medias":
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown("<div class='card-red'>", unsafe_allow_html=True)
+            st.markdown("**Grupo 1**")
+            x1_txt = st.text_input("Media 1 (x̄₁)", value="0")
+            s1_txt = st.text_input("Desviación 1 (s₁)", value="1")
+            n1_txt = st.text_input("Tamaño 1 (n₁)", value="30")
+            st.markdown("</div>", unsafe_allow_html=True)
+        with g2:
+            st.markdown("<div class='card-red'>", unsafe_allow_html=True)
+            st.markdown("**Grupo 2**")
+            x2_txt = st.text_input("Media 2 (x̄₂)", value="0")
+            s2_txt = st.text_input("Desviación 2 (s₂)", value="1")
+            n2_txt = st.text_input("Tamaño 2 (n₂)", value="30")
+            st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown("<div class='card-red'>", unsafe_allow_html=True)
+            st.markdown("**Grupo 1**")
+            x1_txt = st.text_input("Número de éxitos (x₁)", value="0")
+            n1_txt = st.text_input("Tamaño 1 (n₁)", value="30")
+            p1_txt = st.text_input("Proporción muestral (p̂₁) (opcional)", value="")
+            st.markdown("</div>", unsafe_allow_html=True)
+        with g2:
+            st.markdown("<div class='card-red'>", unsafe_allow_html=True)
+            st.markdown("**Grupo 2**")
+            x2_txt = st.text_input("Número de éxitos (x₂)", value="0")
+            n2_txt = st.text_input("Tamaño 2 (n₂)", value="30")
+            p2_txt = st.text_input("Proporción muestral (p̂₂) (opcional)", value="")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="centered"><b>Nivel de Confianza (1−α) %</b></div>', unsafe_allow_html=True)
+    nivel_cmp_txt = st.text_input("", value="95")
+
+    calcular_cmp = st.button("Calcular comparación")
+
+    if calcular_cmp:
+        nivel_cmp = tf(nivel_cmp_txt, 95)
+        alpha = 1 - (nivel_cmp / 100.0)
+
+        if analisis == "Diferencia de Medias":
+            x1 = tf(x1_txt, 0); x2 = tf(x2_txt, 0)
+            s1 = tf(s1_txt, 1); s2 = tf(s2_txt, 1)
+            n1 = tf(n1_txt, None); n2 = tf(n2_txt, None)
+            if not n1 or not n2 or n1 <=0 or n2<=0:
+                st.error("n₁ y n₂ deben ser > 0")
+            else:
+                diff = x1 - x2
+                se = math.sqrt((s1**2 / n1) + (s2**2 / n2))
+                crit = stats.norm.ppf(1 - alpha/2)
+                me = crit * se
+                lower = diff - me
+                upper = diff + me
+                # p-value bilateral contra H₀: diff=0
+                if se > 0:
+                    z_stat = diff / se
+                    p_val = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+                else:
+                    z_stat = 0; p_val = 1
+
+                st.markdown("### Resultados", unsafe_allow_html=True)
+                r1 = st.columns(3)
+                with r1[0]: st.metric("Diferencia de medias", f"{diff:.4f}")
+                with r1[1]: st.metric("Error estándar combinado", f"{se:.4f}")
+                with r1[2]: st.metric("Margen de error (ME)", f"{me:.4f}")
+
+                r2 = st.columns(2)
+                with r2[0]: st.metric("Límite Inferior", f"{lower:.4f}")
+                with r2[1]: st.metric("Límite Superior", f"{upper:.4f}")
+
+                st.markdown("#### Interpretación del Intervalo:")
+                texto = (
+                    f"Con un {nivel_cmp:.1f}% de confianza, la diferencia verdadera entre las medias poblacionales "
+                    f"está entre {lower:.4f} y {upper:.4f}.<br>"
+                    f"Método usado: Normal (Z) – muestras independientes, comparación de medias. "
+                    f"Error estándar combinado: {se:.4f}."
+                )
+                st.markdown(f"<div class='card-white'>{texto}</div>", unsafe_allow_html=True)
+
+                st.markdown(
+                    f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
+                    f"border:2px solid #7C4DFF;font-weight:700;margin-top:12px;'>"
+                    f"Prueba de hipótesis (H₀: μ₁ − μ₂ = 0): Z = {z_stat:.4f}, p = {p_val:.4f}. "
+                    f\"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}.\"
+                    f"</div>", unsafe_allow_html=True)
+
+        else:  # Diferencia de Proporciones
+            x1 = tf(x1_txt, 0); x2 = tf(x2_txt, 0)
+            n1 = tf(n1_txt, None); n2 = tf(n2_txt, None)
+            if not n1 or not n2 or n1 <=0 or n2<=0:
+                st.error("n₁ y n₂ deben ser > 0")
+            else:
+                if p1_txt.strip():
+                    p1_hat = tf(p1_txt, 0)
+                else:
+                    p1_hat = x1 / n1 if n1 else 0
+                if p2_txt.strip():
+                    p2_hat = tf(p2_txt, 0)
+                else:
+                    p2_hat = x2 / n2 if n2 else 0
+
+                diff = p1_hat - p2_hat
+                se = math.sqrt(p1_hat*(1-p1_hat)/n1 + p2_hat*(1-p2_hat)/n2)
+                crit = stats.norm.ppf(1 - alpha/2)
+                me = crit * se
+                lower = diff - me
+                upper = diff + me
+                if se > 0:
+                    z_stat = diff / se
+                    p_val = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+                else:
+                    z_stat = 0; p_val = 1
+
+                st.markdown("### Resultados", unsafe_allow_html=True)
+                r1 = st.columns(3)
+                with r1[0]: st.metric("Estimador puntual (p̂₁ − p̂₂)", f"{diff:.4f}")
+                with r1[1]: st.metric("Error estándar combinado", f"{se:.4f}")
+                with r1[2]: st.metric("Valor crítico Z", f"{crit:.4f}")
+
+                r2 = st.columns(3)
+                with r2[0]: st.metric("Margen de error (ME)", f"{me:.4f}")
+                with r2[1]: st.metric("Límite Inferior", f"{lower:.4f}")
+                with r2[2]: st.metric("Límite Superior", f"{upper:.4f}")
+
+                st.markdown("#### Interpretación del Intervalo:")
+                texto = (
+                    f"Con un {nivel_cmp:.1f}% de confianza, la diferencia verdadera entre las proporciones poblacionales "
+                    f"está entre {lower:.4f} y {upper:.4f}.<br>"
+                    f"Método usado: Normal (Z) – muestras independientes, diferencia de proporciones. "
+                    f"Error estándar combinado: {se:.4f}."
+                )
+                st.markdown(f"<div class='card-white'>{texto}</div>", unsafe_allow_html=True)
+
+                st.markdown(
+                    f"<div style='background:#1b3a90;color:white;padding:12px;border-radius:12px;"
+                    f"border:2px solid #7C4DFF;font-weight:700;margin-top:12px;'>"
+                    f"Prueba de hipótesis (H₀: p₁ − p₂ = 0): Z = {z_stat:.4f}, p = {p_val:.4f}. "
+                    f\"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}.\"
+                    f"</div>", unsafe_allow_html=True)
