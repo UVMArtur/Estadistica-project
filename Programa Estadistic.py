@@ -23,7 +23,7 @@ st.markdown("""
     .stTextArea textarea, input[type=text] {
         background-color: #111111; color: white; border: 1px solid #7C4DFF;
     }
-    /* Botones morados (menos curvatura y más anchos) */
+    /* Botones morados */
     .stButton>button {
         background-color: #7C4DFF; color: white; border-radius: 12px; width: 100%;
         border: none; font-weight: bold; padding: 14px 0;
@@ -39,17 +39,15 @@ st.markdown("""
     div[data-testid="metric-container"] div[data-testid="stMetricValue"] { color: black !important; font-weight: 800; }
     /* Centrados */
     .centered { display: flex; justify-content: center; align-items: center; }
-    /* Cards contenedor */
+    /* Cards */
     .card-white {
         background: white; color: black; border-radius: 24px; padding: 18px 24px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-    /* Tarjetas rojas para comparación dos poblaciones */
     .card-red {
         background: white; color: #c8102e; border-radius: 18px; padding: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #c8102e;
     }
-    /* Tarjetas verdes para tamaño de muestra */
     .card-green {
         background: white; color: #0c7a43; border-radius: 18px; padding: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #0c7a43;
@@ -226,7 +224,7 @@ with tabs[0]:
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
 
 # ---------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (solo Media y Proporción) con subíndices
+# PESTAÑA 2: Inferencia estadística (Media y Proporción) con subíndices
 # ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
@@ -258,7 +256,7 @@ with tabs[1]:
         with colB:
             n_txt = st.text_input("Tamaño de muestra (n)", value="30")
         with colC:
-            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_media_inf")
 
         colD, colE = st.columns(2)
         with colD:
@@ -271,14 +269,13 @@ with tabs[1]:
             usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H₀)")
         with colG:
             mu0_txt = st.text_input("Valor hipotético (μ₀)", value="0", disabled=not usar_hipotesis)
-
     else:  # Proporción
         with colA:
             x_success_txt = st.text_input("Número de éxitos (x)", value="0")
         with colB:
             n_txt = st.text_input("Tamaño de muestra (n)", value="30")
         with colC:
-            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_prop_inf")
 
         colF, colG = st.columns(2)
         with colF:
@@ -464,7 +461,7 @@ with tabs[2]:
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="centered"><b>Nivel de Confianza (1−α) %</b></div>', unsafe_allow_html=True)
-    nivel_cmp_txt = st.text_input("", value="95")
+    nivel_cmp_txt = st.text_input("", value="95", key="nivel_cmp_tab3")
 
     calcular_cmp = st.button("Calcular comparación")
 
@@ -583,7 +580,7 @@ with tabs[3]:
 
     st.markdown("### Datos:")
 
-    def tf(txt, default=None):
+    def tf2(txt, default=None):
         txt = str(txt).strip()
         if txt == "":
             return default
@@ -595,51 +592,50 @@ with tabs[3]:
     if tipo_n == "Por media":
         c1, c2 = st.columns(2)
         with c1:
-            sigma_txt = st.text_input("Desviación estándar poblacional (σ)", value="")
+            sigma_txt = st.text_input("Desviación estándar poblacional (σ)", value="", key="sigma_media")
         with c2:
-            s_txt = st.text_input("Desviación estándar muestral (s)", value="")
+            s_txt = st.text_input("Desviación estándar muestral (s)", value="", key="s_media")
 
         c3, c4 = st.columns(2)
         with c3:
-            e_txt = st.text_input("Margen de error deseado (E)", value="1")
+            e_txt = st.text_input("Margen de error deseado (E)", value="1", key="E_media")
         with c4:
-            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_media_n")
 
     else:  # Por proporción
         c1, c2 = st.columns(2)
         with c1:
-            p_hat_txt = st.text_input("Proporción esperada (p̂) (0-1)", value="0.5")
+            p_hat_txt = st.text_input("Proporción esperada (p̂) (0-1)", value="0.5", key="phat_prop")
         with c2:
-            e_txt = st.text_input("Margen de error deseado (E)", value="0.05")
+            e_txt = st.text_input("Margen de error deseado (E)", value="0.05", key="E_prop")
 
         c3, c4 = st.columns(2)
         with c3:
-            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_prop_n")
         with c4:
-            dummy = st.text_input(" ", value="", key="blank_prop")
+            pass
 
     st.markdown("<br>", unsafe_allow_html=True)
     colF1, colF2 = st.columns(2)
     with colF1:
         calc_finite = st.checkbox("Calcular por población finita")
     with colF2:
-        N_txt = st.text_input("Tamaño de población (N)", value="", disabled=not calc_finite)
+        N_txt = st.text_input("Tamaño de población (N)", value="", disabled=not calc_finite, key="N_finite")
 
     calcular_n = st.button("Calcular Muestra")
 
     if calcular_n:
-        nivel_conf = tf(nivel_txt, 95)
+        nivel_conf = tf2(nivel_txt, 95)
         alpha = 1 - (nivel_conf / 100.0)
         z = stats.norm.ppf(1 - alpha/2)
 
         n0 = None
         metodo = ""
-        interp = ""
 
         if tipo_n == "Por media":
-            sigma = tf(sigma_txt, 0)
-            s = tf(s_txt, 0)
-            E = tf(e_txt, None)
+            sigma = tf2(sigma_txt, 0)
+            s = tf2(s_txt, 0)
+            E = tf2(e_txt, None)
             if E is None or E <= 0:
                 st.error("Margen de error debe ser > 0")
             else:
@@ -650,8 +646,8 @@ with tabs[3]:
                     n0 = (z * sd_use / E) ** 2
                     metodo = f"Normal (Z) – Planeación de tamaño de muestra para media (σ/s={sd_use})."
         else:
-            p_hat = tf(p_hat_txt, 0.5)
-            E = tf(e_txt, None)
+            p_hat = tf2(p_hat_txt, 0.5)
+            E = tf2(e_txt, None)
             if E is None or E <= 0:
                 st.error("Margen de error debe ser > 0")
             else:
@@ -662,7 +658,7 @@ with tabs[3]:
             n_req = math.ceil(n0)
             usado_finite = False
             if calc_finite:
-                N = tf(N_txt, None)
+                N = tf2(N_txt, None)
                 if N and N > 0:
                     n_req = math.ceil((N * n0) / (N + n0 - 1))
                     usado_finite = True
@@ -686,7 +682,7 @@ with tabs[3]:
                 else:
                     detalle += f" para estimar la proporción con un margen de error de {E}."
                 if usado_finite:
-                    detalle += f" Considerando población finita N={int(tf(N_txt,0))}."
+                    detalle += f" Considerando población finita N={int(tf2(N_txt,0))}."
                 interp = (
                     f"{detalle}<br>"
                     f"Método usado: {metodo}"
