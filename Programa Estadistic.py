@@ -49,6 +49,11 @@ st.markdown("""
         background: white; color: #c8102e; border-radius: 18px; padding: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #c8102e;
     }
+    /* Tarjetas verdes para tamaño de muestra */
+    .card-green {
+        background: white; color: #0c7a43; border-radius: 18px; padding: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.20); border: 2px solid #0c7a43;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -396,7 +401,8 @@ with tabs[1]:
                     fig_curve.add_vrect(x0=lower, x1=upper, fillcolor='rgba(124,77,255,0.25)', line_width=0, annotation_text="IC")
                     fig_curve.add_vline(x=center, line_width=2, line_dash="dash", line_color="white", annotation_text="Centro")
                     fig_curve.update_layout(
-                        plot_bgcolor='black', paper_bgcolor='black',
+                        plot_bgcolor='black',
+                        paper_bgcolor='black',
                         font=dict(color='white'),
                         xaxis_title="Valor", yaxis_title="Densidad"
                     )
@@ -564,3 +570,132 @@ with tabs[2]:
                     f"Prueba de hipótesis (H₀: p₁ − p₂ = 0): Z = {z_stat:.4f}, p = {p_val:.4f}. "
                     f"Decisión: {'Rechaza H₀' if p_val < alpha else 'No se rechaza H₀'}."
                     f"</div>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------
+# PESTAÑA 4: Tamaño de muestra (media / proporción, con corrección finita)
+# ---------------------------------------------------------------------
+with tabs[3]:
+    st.markdown("## Tamaño de Muestra")
+    st.markdown('<div class="gradient-line" style="background: linear-gradient(90deg,#d7df01 0%,#00e6b8 100%);"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="centered"><b>Seleccione Análisis</b></div>', unsafe_allow_html=True)
+    tipo_n = st.radio("", ["Por media", "Por proporción"], horizontal=True, index=0)
+
+    st.markdown("### Datos:")
+
+    def tf(txt, default=None):
+        txt = str(txt).strip()
+        if txt == "":
+            return default
+        try:
+            return float(txt)
+        except:
+            return None
+
+    if tipo_n == "Por media":
+        c1, c2 = st.columns(2)
+        with c1:
+            sigma_txt = st.text_input("Desviación estándar poblacional (σ)", value="")
+        with c2:
+            s_txt = st.text_input("Desviación estándar muestral (s)", value="")
+
+        c3, c4 = st.columns(2)
+        with c3:
+            e_txt = st.text_input("Margen de error deseado (E)", value="1")
+        with c4:
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+
+    else:  # Por proporción
+        c1, c2 = st.columns(2)
+        with c1:
+            p_hat_txt = st.text_input("Proporción esperada (p̂) (0-1)", value="0.5")
+        with c2:
+            e_txt = st.text_input("Margen de error deseado (E)", value="0.05")
+
+        c3, c4 = st.columns(2)
+        with c3:
+            nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95")
+        with c4:
+            dummy = st.text_input(" ", value="", key="blank_prop")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    colF1, colF2 = st.columns(2)
+    with colF1:
+        calc_finite = st.checkbox("Calcular por población finita")
+    with colF2:
+        N_txt = st.text_input("Tamaño de población (N)", value="", disabled=not calc_finite)
+
+    calcular_n = st.button("Calcular Muestra")
+
+    if calcular_n:
+        nivel_conf = tf(nivel_txt, 95)
+        alpha = 1 - (nivel_conf / 100.0)
+        z = stats.norm.ppf(1 - alpha/2)
+
+        n0 = None
+        metodo = ""
+        interp = ""
+
+        if tipo_n == "Por media":
+            sigma = tf(sigma_txt, 0)
+            s = tf(s_txt, 0)
+            E = tf(e_txt, None)
+            if E is None or E <= 0:
+                st.error("Margen de error debe ser > 0")
+            else:
+                sd_use = sigma if sigma and sigma > 0 else s
+                if sd_use is None or sd_use <= 0:
+                    st.error("Proporciona σ o s para estimar la media.")
+                else:
+                    n0 = (z * sd_use / E) ** 2
+                    metodo = f"Normal (Z) – Planeación de tamaño de muestra para media (σ/s={sd_use})."
+        else:
+            p_hat = tf(p_hat_txt, 0.5)
+            E = tf(e_txt, None)
+            if E is None or E <= 0:
+                st.error("Margen de error debe ser > 0")
+            else:
+                n0 = (z**2 * p_hat * (1 - p_hat)) / (E**2)
+                metodo = f"Normal (Z) – Planeación de tamaño de muestra para proporción (p̂={p_hat})."
+
+        if n0 is not None:
+            n_req = math.ceil(n0)
+            usado_finite = False
+            if calc_finite:
+                N = tf(N_txt, None)
+                if N and N > 0:
+                    n_req = math.ceil((N * n0) / (N + n0 - 1))
+                    usado_finite = True
+
+            st.markdown("---")
+            st.markdown("## Resultado")
+            cres = st.columns([1, 2])
+            with cres[0]:
+                st.markdown(
+                    f"<div class='card-green' style='text-align:center;'>"
+                    f"<div style='font-weight:700;'>Tamaño de la muestra requerida (n)</div>"
+                    f"<div style='font-size:32px;'>{n_req}</div>"
+                    f"<div style='font-size:12px;'>Participantes</div>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+            with cres[1]:
+                detalle = f"Con un {nivel_conf:.1f}% de confianza, se requieren al menos {n_req} observaciones"
+                if tipo_n == "Por media":
+                    detalle += f" para estimar la media con un margen de error de {E}."
+                else:
+                    detalle += f" para estimar la proporción con un margen de error de {E}."
+                if usado_finite:
+                    detalle += f" Considerando población finita N={int(tf(N_txt,0))}."
+                interp = (
+                    f"{detalle}<br>"
+                    f"Método usado: {metodo}"
+                )
+                st.markdown(f"<div class='card-white'>{interp}</div>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------
+# PESTAÑA 5: Visual LAB (placeholder)
+# ---------------------------------------------------------------------
+with tabs[4]:
+    st.markdown("### Visual LAB")
+    st.info("En construcción. Aquí podrás agregar visualizaciones personalizadas.")
