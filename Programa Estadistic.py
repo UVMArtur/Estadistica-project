@@ -225,7 +225,6 @@ with tabs[0]:
             bin_edges = [val_min - 0.5, val_max + 0.5]
         else:
             bin_edges = list(np.linspace(val_min, val_max, k + 1))
-            # asegurar monotonía estricta
             for i in range(1, len(bin_edges)):
                 if bin_edges[i] <= bin_edges[i-1]:
                     bin_edges[i] = bin_edges[i-1] + 1e-9
