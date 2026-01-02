@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -6,12 +6,9 @@ import plotly.graph_objects as go
 import math
 from scipy import stats
 
-# -------------------------------------------------------------------
-# CONFIG GLOBAL
-# -------------------------------------------------------------------
+# CONFIG
 st.set_page_config(page_title="Calculadora de Estadística", layout="wide", page_icon="📊")
 
-# Paletas por sección
 COLORS = {
     "tend": "#7C4DFF",
     "inf": "#1b4de4",
@@ -20,9 +17,7 @@ COLORS = {
     "lab": "#e67e22",
 }
 
-# -------------------------------------------------------------------
 # ESTILOS
-# -------------------------------------------------------------------
 st.markdown(f"""
 <style>
     .stApp {{ background-color: #000; color: white; }}
@@ -32,13 +27,8 @@ st.markdown(f"""
     .stTabs [aria-selected="true"] {{ background-color: rgba(124,77,255,0.25); border-bottom: 3px solid {COLORS['tend']}; }}
     .gradient-line {{ height: 8px; background: linear-gradient(90deg, #7C4DFF 0%, #00B0FF 100%); border-radius: 4px; margin-bottom: 20px; }}
     .stTextArea textarea, input[type=text] {{ background-color: #111; color: white; border: 1px solid #7C4DFF; }}
-    .btn-purple > button {{ background-color: #7C4DFF; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
-    .btn-purple > button:hover {{ background-color: #9b6bff; }}
-    .btn-blue > button {{ background-color: {COLORS['inf']}; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
-    .btn-blue > button:hover {{ background-color: #3f6bff; }}
-    .btn-red > button {{ background-color: {COLORS['comp']}; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
-    .btn-green > button {{ background-color: {COLORS['n']}; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
-    .btn-orange > button {{ background-color: {COLORS['lab']}; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
+    .stButton>button {{ background-color: #7C4DFF; color: white; border-radius: 12px; width: 100%; border: none; font-weight: bold; padding: 14px 0; }}
+    .stButton>button:hover {{ background-color: #9b6bff; }}
     div[data-testid="metric-container"] {{
         background-color: white !important; color: black !important;
         border-radius: 14px; padding: 14px;
@@ -73,8 +63,7 @@ def to_float(txt, default=None):
 
 def sturges_bins(n):
     k_est = 1 + 3.322 * math.log10(n)
-    k = max(1, round(k_est))  # redondeo al más cercano para evitar sobre-particionar
-    return k
+    return max(1, round(k_est))
 
 def normal_curve_with_ci(mu, se, lower, upper, hypo=None, crit=None, stat=None, title=""):
     xs = np.linspace(mu - 4*se, mu + 4*se, 400)
@@ -138,14 +127,6 @@ def n_vs_error_plot(z, sd_use, n_max=400, finite_N=None):
                       title="Relación n vs. E")
     return fig
 
-def help_button(section_color, text):
-    st.markdown(
-        f"<div style='text-align:center;margin-top:6px;'><span style='background:{section_color};"
-        "color:white;border-radius:50%;padding:4px 8px;cursor:pointer;'>?</span></div>",
-        unsafe_allow_html=True)
-    with st.expander("¿Qué significa esto?"):
-        st.markdown(text)
-
 # ---------------------------------------------------------------------
 # PESTAÑA 1: Medidas de tendencia central
 # ---------------------------------------------------------------------
@@ -167,8 +148,8 @@ with tabs[0]:
                                   label_visibility="collapsed")
         st.markdown('<div class="centered"><b>¿Qué tipo de datos son?</b></div>', unsafe_allow_html=True)
         tipo_datos = st.radio("", ["Muestra", "Población"], horizontal=True)
-        st.caption("Ejemplo rápido: 12, 15, 13, 14, 16, 15, 14, 13")
-        calcular = st.button("Analizar datos", key="btn_tend", help="Calcula tendencia central e histograma")
+        st.caption("Ejemplo: 12, 15, 13, 14, 16, 15, 14, 13")
+        calcular = st.button("Analizar datos", key="btn_tend")
 
     if input_data:
         try:
@@ -236,7 +217,6 @@ with tabs[0]:
         st.markdown("---")
         st.markdown("### Histograma y tabla de Frecuencias")
 
-        # Regla de Sturges ajustada (redondeo)
         k = sturges_bins(n)
         val_min = np.min(arr)
         val_max = np.max(arr)
@@ -295,27 +275,16 @@ with tabs[0]:
                 'Porcentaje (%)': '{:.2f}'
             }), height=400)
             st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
-        help_button(COLORS['tend'], """
-- Intervalo de confianza: rango donde se espera que esté el valor verdadero.
-- Sesgo: si la cola es a la izquierda/derecha o simétrica.
-- Histograma: muestra la frecuencia por grupo (Sturges).
-- Rechazar H₀: indica evidencia suficiente contra la hipótesis nula.
-""")
 
 # ---------------------------------------------------------------------
-# PESTAÑA 2: Inferencia estadística (Media y Proporción) con opciones éxitos/p-hat
+# PESTAÑA 2: Inferencia estadística
 # ---------------------------------------------------------------------
 with tabs[1]:
     st.markdown("## Inferencia de Una Población")
     st.markdown('<div class="gradient-line"></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="centered"><b>¿Qué tipo de dato tienes?</b></div>', unsafe_allow_html=True)
-    tipo_inferencia = st.radio(
-        "",
-        ["Promedio (Media)", "Porcentaje (Proporción)"],
-        horizontal=True,
-        index=0
-    )
+    tipo_inferencia = st.radio("", ["Promedio (Media)", "Porcentaje (Proporción)"], horizontal=True, index=0)
 
     st.markdown("### Datos:")
 
@@ -339,7 +308,7 @@ with tabs[1]:
             usar_hipotesis = st.checkbox("Calcular prueba de hipótesis (H₀)")
         with colG:
             mu0_txt = st.text_input("Valor hipotético (μ₀)", value="0", disabled=not usar_hipotesis)
-    else:  # Proporción
+    else:
         colF0, colF1 = st.columns(2)
         with colF0:
             modo_prop = st.radio("Entrada para proporción", ["Número de éxitos (x)", "Proporción muestral (p̂)"], horizontal=True)
@@ -352,7 +321,6 @@ with tabs[1]:
         else:
             p_hat_txt = st.text_input("Proporción muestral (p̂)", value="0.5")
             x_success_txt = ""
-        colC = st.empty()
         nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_prop_inf")
         colF, colG = st.columns(2)
         with colF:
@@ -361,8 +329,7 @@ with tabs[1]:
             mu0_txt = st.text_input("Proporción hipotética (p₀)", value="0.5", disabled=not usar_hipotesis)
 
     st.caption("Ejemplos: media=12.5, n=25, s=2.3, μ₀=10 | proporción: x=55, n=100, p̂=0.55, p₀=0.5")
-    calc_class = "btn-blue"
-    calcular_inf = st.button("Calcular Inferencia", key="btn_inf", help="Calcula IC y prueba", type="secondary", kwargs=None, on_click=None)
+    calcular_inf = st.button("Calcular Inferencia", key="btn_inf")
 
     if calcular_inf:
         n_inf = to_float(n_txt, None)
@@ -415,7 +382,7 @@ with tabs[1]:
                             stat_test = (x_bar - mu0) / se
                             p_value = 2 * (1 - stats.t.cdf(abs(stat_test), df))
                             decision = "Rechaza H₀" if abs(stat_test) > crit else "No se rechaza H₀"
-            else:  # Proporción
+            else:
                 mu0 = to_float(mu0_txt, 0.5)
                 hypo_val = mu0
                 if modo_prop == "Número de éxitos (x)":
@@ -471,7 +438,6 @@ with tabs[1]:
                         f"Prueba de hipótesis: estadístico = {stat_test:.4f}. Decisión: {decision}."
                         f"</div>", unsafe_allow_html=True)
 
-                # Curva con IC, línea en valor hipotético y zona crítica
                 fig_curve = normal_curve_with_ci(
                     mu=point_est,
                     se=se,
@@ -483,12 +449,6 @@ with tabs[1]:
                     title="Distribución, IC y zonas críticas"
                 )
                 st.plotly_chart(fig_curve, use_container_width=True)
-
-        help_button(COLORS['inf'], """
-- Intervalo de confianza: rango probable del parámetro verdadero.
-- Rechazar H₀: evidencia suficiente contra la hipótesis nula.
-- Gráfico: línea en valor hipotético, IC sombreado, zonas críticas.
-""")
 
 # ---------------------------------------------------------------------
 # PESTAÑA 3: Comparación de dos poblaciones
@@ -609,7 +569,7 @@ with tabs[2]:
                 fig_bar.add_hline(y=0, line_dash="dash", line_color="white")
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-        else:  # Diferencia de Proporciones
+        else:
             x1 = tf(x1_txt, 0); x2 = tf(x2_txt, 0)
             n1 = tf(n1_txt, None); n2 = tf(n2_txt, None)
             if not n1 or not n2 or n1 <=0 or n2<=0:
@@ -674,15 +634,8 @@ with tabs[2]:
                 fig_bar.add_hline(y=0, line_dash="dash", line_color="white")
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-    help_button(COLORS['comp'], """
-- IC de la diferencia: si incluye 0, no hay evidencia de diferencia.
-- Barras con IC: muestran la estimación y su intervalo.
-- Curvas superpuestas: visualizan el traslape entre grupos.
-- Prueba H₀: diferencia = 0.
-""")
-
 # ---------------------------------------------------------------------
-# PESTAÑA 4: Tamaño de muestra (media / proporción, corrección finita) + gráfico n vs E
+# PESTAÑA 4: Tamaño de muestra
 # ---------------------------------------------------------------------
 with tabs[3]:
     st.markdown("## Tamaño de Muestra")
@@ -714,7 +667,7 @@ with tabs[3]:
         with c4:
             nivel_txt = st.text_input("Nivel de confianza (1−α) %", value="95", key="nivel_conf_media_n")
 
-    else:  # Por proporción
+    else:
         c1, c2 = st.columns(2)
         with c1:
             p_hat_txt = st.text_input("Proporción esperada (p̂) (0-1)", value="0.5", key="phat_prop")
@@ -805,14 +758,8 @@ with tabs[3]:
             fig_nvse = n_vs_error_plot(z, sd_use, n_max=400, finite_N=N_val if calc_finite else None)
             st.plotly_chart(fig_nvse, use_container_width=True)
 
-    help_button(COLORS['n'], """
-- n vs E: a mayor n, menor margen de error.
-- Corrección finita: ajusta n cuando la población N es pequeña.
-- IC: intervalo donde se espera el parámetro.
-""")
-
 # ---------------------------------------------------------------------
-# PESTAÑA 5: Visual LAB (simulaciones)
+# PESTAÑA 5: Visual LAB
 # ---------------------------------------------------------------------
 with tabs[4]:
     st.markdown("## Visual LAB (simulaciones y didáctica)")
@@ -887,10 +834,3 @@ with tabs[4]:
             st.plotly_chart(fig_crit, use_container_width=True)
 
             st.success("Visual LAB generado. Ajusta parámetros y vuelve a ejecutar para ver cambios.")
-
-    help_button(COLORS['lab'], """
-- TLC: histograma de medias simuladas.
-- EE vs n: cómo disminuye el error estándar al aumentar n.
-- Zonas críticas: áreas de rechazo/aceptación en una prueba bilateral.
-- Usa el campo de datos para ver histograma con media/mediana/moda.
-""")
