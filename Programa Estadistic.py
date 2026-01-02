@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -222,19 +222,17 @@ with tabs[0]:
         val_max = np.max(arr)
 
         if val_min == val_max:
+            bin_edges = [val_min - 0.5, val_max + 0.5]
             width = 1
-            display_edges = [math.floor(val_min), math.floor(val_min) + width]
         else:
-            val_min_int = math.floor(val_min)
-            val_max_int = math.ceil(val_max)
-            rango_int = val_max_int - val_min_int
-            width = math.ceil(rango_int / k)
-            display_edges = [val_min_int + i * width for i in range(k + 1)]
-            display_edges[-1] = val_max_int
+            bin_edges = list(np.linspace(val_min, val_max, k + 1))
+            # asegurar monotonía estricta sumando un epsilon al último
+            bin_edges[-1] = bin_edges[-1] + 1e-9
+            width = (val_max - val_min) / k if k > 0 else 0
 
-        bin_edges = [display_edges[0] - 0.5] + [edge + 0.5 for edge in display_edges[1:]]
         counts, _ = np.histogram(arr, bins=bin_edges)
 
+        display_edges = bin_edges  # ya son monótonas
         grupos = np.arange(1, k + 1)
         tabla_freq = pd.DataFrame({
             'Grupo': grupos,
@@ -252,7 +250,7 @@ with tabs[0]:
                 tabla_freq,
                 x='Grupo',
                 y='Frecuencia Absoluta (fi)',
-                title=f"Histograma (k={k}, ancho={width:.4f})",
+                title=f"Histograma (k={k}, ancho≈{width:.4f})",
                 text='Frecuencia Absoluta (fi)',
             )
             fig.update_traces(marker_color=COLORS['tend'], textposition='outside')
@@ -269,12 +267,12 @@ with tabs[0]:
         with col_tabla:
             st.markdown("#### Tabla de Frecuencias")
             st.dataframe(tabla_freq[['Grupo','Límite Inferior','Límite Superior','Frecuencia Absoluta (fi)','Frecuencia Relativa (hi)','Porcentaje (%)']].style.format({
-                'Límite Inferior': '{:.0f}',
-                'Límite Superior': '{:.0f}',
+                'Límite Inferior': '{:.4f}',
+                'Límite Superior': '{:.4f}',
                 'Frecuencia Relativa (hi)': '{:.4f}',
                 'Porcentaje (%)': '{:.2f}'
             }), height=400)
-            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho:** {width}")
+            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho≈** {width:.4f}")
 
 # ---------------------------------------------------------------------
 # PESTAÑA 2: Inferencia estadística
@@ -750,7 +748,6 @@ with tabs[3]:
                 interp = f"{detalle}<br>Método usado: {metodo}"
                 st.markdown(f"<div class='card-white'>{interp}</div>", unsafe_allow_html=True)
 
-            # Gráfico n vs E
             if tipo_n == "Por media":
                 sd_use = sigma if sigma and sigma > 0 else s
             else:
