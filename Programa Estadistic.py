@@ -223,17 +223,18 @@ with tabs[0]:
 
         if val_min == val_max:
             bin_edges = [val_min - 0.5, val_max + 0.5]
-            width = 1
         else:
             bin_edges = list(np.linspace(val_min, val_max, k + 1))
-            # asegurar monotonía estricta sumando un epsilon al último
-            bin_edges[-1] = bin_edges[-1] + 1e-9
-            width = (val_max - val_min) / k if k > 0 else 0
+            # asegurar monotonía estricta
+            for i in range(1, len(bin_edges)):
+                if bin_edges[i] <= bin_edges[i-1]:
+                    bin_edges[i] = bin_edges[i-1] + 1e-9
+        width = (bin_edges[-1] - bin_edges[0]) / k if k > 0 else 0
 
         counts, _ = np.histogram(arr, bins=bin_edges)
 
-        display_edges = bin_edges  # ya son monótonas
-        grupos = np.arange(1, k + 1)
+        display_edges = bin_edges
+        grupos = np.arange(1, len(display_edges))
         tabla_freq = pd.DataFrame({
             'Grupo': grupos,
             'Límite Inferior': display_edges[:-1],
@@ -250,7 +251,7 @@ with tabs[0]:
                 tabla_freq,
                 x='Grupo',
                 y='Frecuencia Absoluta (fi)',
-                title=f"Histograma (k={k}, ancho≈{width:.4f})",
+                title=f"Histograma (k={len(display_edges)-1}, ancho≈{width:.4f})",
                 text='Frecuencia Absoluta (fi)',
             )
             fig.update_traces(marker_color=COLORS['tend'], textposition='outside')
@@ -272,7 +273,7 @@ with tabs[0]:
                 'Frecuencia Relativa (hi)': '{:.4f}',
                 'Porcentaje (%)': '{:.2f}'
             }), height=400)
-            st.info(f"**N:** {n} | **Grupos (k):** {k} | **Ancho≈** {width:.4f}")
+            st.info(f"**N:** {n} | **Grupos (k):** {len(display_edges)-1} | **Ancho≈** {width:.4f}")
 
 # ---------------------------------------------------------------------
 # PESTAÑA 2: Inferencia estadística
