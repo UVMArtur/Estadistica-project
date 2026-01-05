@@ -759,7 +759,7 @@ with tabs[3]:
 # PESTAÑA 5: Visual LAB
 # ---------------------------------------------------------------------
 with tabs[4]:
-    st.markdown("## Visual LAB (simulaciones y didáctica)")
+    st.markdown("## Visual LAB (simulación)")
     st.markdown('<div class="gradient-line" style="background: linear-gradient(90deg,#f39c12 0%,#f5b041 100%);"></div>', unsafe_allow_html=True)
     st.write("Explora visualmente cómo cambian los resultados al variar parámetros.")
 
